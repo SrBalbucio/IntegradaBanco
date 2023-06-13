@@ -6,11 +6,8 @@ import balbucio.org.ejsl.frame.JLoadingFrame;
 import balbucio.org.ejsl.utils.ImageUtils;
 import balbucio.sqlapi.sqlite.SQLiteInstance;
 import balbucio.sqlapi.sqlite.SqliteConfig;
-import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDeepOceanContrastIJTheme;
-
 import javax.swing.*;
-import javax.swing.plaf.metal.OceanTheme;
 import java.io.File;
 
 public class Main {
