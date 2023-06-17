@@ -3,6 +3,7 @@ package balbucio.banco.manager;
 import balbucio.banco.Main;
 import balbucio.banco.model.Acoes;
 import balbucio.banco.model.Transference;
+import balbucio.banco.model.User;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.responsivescheduler.RSTask;
 import balbucio.sqlapi.sqlite.SQLiteInstance;
@@ -33,11 +34,15 @@ public class MercadoManager {
 
         List<Object[]> u = sqlite.getAllValuesFromColumns("acoes", "name", "recebedor", "token");
         for(Object[] t : u){
-            acoes.add(new Acoes((String) t[0], (String) t[1], (String) t[2]));
+            acoes.add(new Acoes((String) t[2], (String) t[0], (String) t[1]));
         }
         Main.getScheduler().repeatTask(new RSTask() {
             @Override
             public void run() {
+                if(Main.connected){
+                    valores = (Map<String, Integer>) Main.request("GETACOESVALORES", "");
+                    return;
+                }
                 valores.forEach((s, i) -> valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
                 acoes.forEach(a -> {
                     System.out.println("Mercado se movimentou e o user "+a.getRecebedor()+" ganhou "+valores.get(a.getActionName()));
@@ -45,5 +50,12 @@ public class MercadoManager {
                 });
             }
         }, 0, 10000);
+    }
+
+    public static List<Acoes> getAcoes(User user){
+        if(Main.connected){
+            return (List<Acoes>) Main.request("GETACOES", user);
+        }
+        return acoes.stream().filter(a -> a.getRecebedor().equalsIgnoreCase(user.getToken())).toList();
     }
 }

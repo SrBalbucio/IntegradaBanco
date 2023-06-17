@@ -14,6 +14,8 @@ import balbucio.org.ejsl.utils.ColorUtils;
 import balbucio.org.ejsl.utils.ImageUtils;
 import balbucio.responsivescheduler.RSTask;
 import de.milchreis.uibooster.UiBooster;
+import de.milchreis.uibooster.components.WaitingDialog;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -28,13 +30,16 @@ public class MenuFrame extends JFrame {
 
     private User user;
     private List<Transference> transferences = new ArrayList<>();
+    private List<Acoes> acoesUser = new ArrayList<>();
     private DefaultTableModel model;
     private JLabel saldoText;
+    private JTable table;
 
     public MenuFrame(User user){
         this.user = user;
         user.setSaldo(0l);
         transferences = TransferenceManager.getTransferences(user);
+        acoesUser = MercadoManager.getAcoes(user);
         transferences.forEach(user::transference);
         this.setSize(640, 480);
         this.setLayout(new BorderLayout());
@@ -48,11 +53,12 @@ public class MenuFrame extends JFrame {
                 user.setSaldo(0l);
                 transferences = TransferenceManager.getTransferences(user);
                 transferences.forEach(user::transference);
+                acoesUser = MercadoManager.getAcoes(user);
 
-                for (int i = 0; i < model.getRowCount(); i++) {
-                    model.removeRow(i);
-                }
-
+                model = new DefaultTableModel();
+                model.addColumn("Pagador");
+                model.addColumn("Recebedor");
+                model.addColumn("Valor");
                 int i = 10;
                 for(Transference t : transferences){
                     if(i == 0){
@@ -61,6 +67,8 @@ public class MenuFrame extends JFrame {
                     i--;
                     model.addRow(new Object[] {UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue()});
                 }
+
+                table.setModel(model);
                 saldoText.setText("Saldo Atual: $"+user.getSaldo());
             }
         }, 10000, 5000);
@@ -107,17 +115,36 @@ public class MenuFrame extends JFrame {
         JPanel home = new JPanel();
         JPanel button = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton enviar = new JButton("Enviar dinheiro");
+
+        enviar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String userName = new UiBooster().showTextInputDialog("Qual é o usuário que deseja enviar dinheiro?");
+                int valor = Integer.parseInt(new UiBooster().showTextInputDialog("Quanto você deseja enviar?"));
+                User target = UserManager.getInstance().getUserByName(userName);
+                if(target == null){
+                    JOptionPane.showMessageDialog(null, "Esse usuário não existe!", "Usuário Não Encontrado", JOptionPane.ERROR_MESSAGE);
+                } else{
+                    WaitingDialog dialog = new UiBooster().showWaitingDialog("Enviando Dinheiro!", "Por favor, aguarde!");
+                    TransferenceManager.removeTransference(user, target.getToken(), valor);
+                    dialog.close();
+                }
+            }
+        });
+
         JButton receber = new JButton("Receber dinheiro");
+
         JButton comprar = new JButton("Comprar Ações");
         comprar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String[] acoes = new String[MercadoManager.valores.size()];
+
                 AtomicInteger i = new AtomicInteger();
                 MercadoManager.valores.forEach((a, v) -> {
-                    acoes[i.get()] = a + "($"+v+")";
-                    i.getAndIncrement();
+                    acoes[i.getAndIncrement()] = a + "($"+v+")";
                 });
+
                 List<String> selected = new UiBooster().showMultipleSelection(
                         "Quais ações você deseja comprar?\n\nInstruções: Selecione as ações que deseja comprar (e que você tem dinheiro pra pagar) e aguarde o processamento ser efetuado!\n",
                         "Ações Disponíveis", acoes);
@@ -136,6 +163,26 @@ public class MenuFrame extends JFrame {
             }
         });
         JButton vender = new JButton("Vender Ações");
+
+        vender.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String[] acoes = new String[acoesUser.size()];
+                AtomicInteger i = new AtomicInteger();
+
+                acoesUser.forEach(a -> {
+                    acoes[i.getAndIncrement()] = a.getActionName()+" ($"+MercadoManager.valores.get(a.getActionName())+")";
+                });
+
+                List<String> selected = new UiBooster().showMultipleSelection(
+                        "Quais ações você deseja vender?",
+                        "Ações Disponíveis", acoes);
+
+                for(String a : selected){
+                    acoesUser.stream().filter(ac -> a.contains(ac.getActionName())).findFirst().ifPresent(ac -> ac.delete());
+                }
+            }
+        });
         button.add(enviar);
         button.add(receber);
         button.add(comprar);
@@ -158,7 +205,7 @@ public class MenuFrame extends JFrame {
             i--;
             model.addRow(new Object[] {UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue()});
         }
-        JTable table = new JTable(model);
+        table = new JTable(model);
         table.setFont(table.getFont().deriveFont(14l));
         table.setBorder(new EmptyBorder(20, 0, 0, 0));
         panel.add(table);

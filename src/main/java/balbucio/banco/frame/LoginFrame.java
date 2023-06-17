@@ -1,14 +1,20 @@
 package balbucio.banco.frame;
 
+import balbucio.banco.Main;
 import balbucio.banco.manager.TransferenceManager;
 import balbucio.banco.manager.UserManager;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
+import balbucio.org.ejsl.component.EJSLButton;
+import balbucio.org.ejsl.event.ClickListener;
 import balbucio.org.ejsl.utils.ImageUtils;
+import de.milchreis.uibooster.UiBooster;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -101,8 +107,29 @@ public class LoginFrame extends JFrame {
                new MenuFrame(user);
            }
         });
+        JButton conectar = new JButton("Conectar");
+        conectar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(null, "Essa função pode não funcionar corretamente no seu sistema!\nÉ importante entender que seu firewall pode bloquear o uso desta função.\nSe você não conseguir utilizar por favor abra uma issue.");
+
+                new UiBooster().showConfirmDialog(
+                        "O que você deseja fazer?\nAo clicar SIM você passa a enviar todas as suas ações para um servidor externo\nAo clicar NÃO você se torna um servidor!",
+                        "O que fazer?",
+                        () -> {
+                            String ip = JOptionPane.showInputDialog("Qual é o IP que deseja conectar?");
+                            int port = Integer.parseInt(JOptionPane.showInputDialog("Qual é a porta que deseja conectar?"));
+                            Main.connect(ip, port);
+                        },
+                        () -> {
+                            int port = Integer.parseInt(JOptionPane.showInputDialog("Qual é a porta que deseja abrir o servidor?"));
+                            Main.createServer(port);
+                        });
+            }
+        });
         btns.add(register);
         btns.add(login);
+        btns.add(conectar);
         panel.add(up);
         panel.add(pp);
         panel.add(btns);

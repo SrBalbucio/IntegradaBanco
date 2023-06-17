@@ -47,4 +47,8 @@ public class Acoes {
     public void setRecebedor(String recebedor) {
         this.recebedor = recebedor;
     }
+
+    public void delete(){
+        Main.getSqlite().delete("token", token, "acoes");
+    }
 }

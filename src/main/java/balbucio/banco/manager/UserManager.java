@@ -1,5 +1,6 @@
 package balbucio.banco.manager;
 
+import balbucio.banco.Main;
 import balbucio.banco.model.User;
 import balbucio.sqlapi.sqlite.SQLiteInstance;
 
@@ -27,10 +28,17 @@ public class UserManager {
     }
 
     public boolean existUser(String user, String password){
+        if(Main.connected){
+            return (boolean) Main.request("EXISTUSER", user+":"+password);
+        }
         return users.stream().anyMatch(u -> u.getName().equalsIgnoreCase(user) && u.getPassword().equalsIgnoreCase(password));
     }
 
     public User getUser(String user, String password){
+        if(Main.connected){
+            System.out.println(Main.request("GETUSER", user+":"+password));
+            return (User) Main.request("GETUSER", user+":"+password);
+        }
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(user) && u.getPassword().equalsIgnoreCase(password)).findFirst().orElse(null);
     }
 
@@ -38,6 +46,10 @@ public class UserManager {
         User newUser = getUser(user, password);
         if(newUser == null){
             newUser = new User(user, password);
+            if(Main.connected){
+                System.out.println(Main.request("CREATEUSER", user+":"+password));
+                return (User) Main.request("CREATEUSER", user+":"+password);
+            }
             sqlite.insert("name, password, token, saldo", "'"+user+"', '"+password+"', '"+newUser.getToken()+"', '0'", "users");
         }
         users.add(newUser);
@@ -45,7 +57,17 @@ public class UserManager {
     }
 
     public String getUserName(String token){
+        if(Main.connected){
+            return (String) Main.request("GETUSERNAME", token);
+        }
         return users.stream().filter(u -> u.getToken().equalsIgnoreCase(token)).findFirst().orElse(new User(token, "20")).getName();
+    }
+
+    public User getUserByName(String userName){
+        if(Main.connected){
+            return (User) Main.request("GETUSERBYNAME", userName);
+        }
+        return users.stream().filter(u -> u.getName().equalsIgnoreCase(userName)).findFirst().orElse(null);
     }
 
 }

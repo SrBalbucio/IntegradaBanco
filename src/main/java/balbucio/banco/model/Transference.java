@@ -17,7 +17,7 @@ public class Transference {
         this.tokenRecebedor = tokenRecebedor;
         this.value = value;
         this.time = new Date().getTime();
-        Main.getSqlite().insert("pagante, recebedor, value, time", "'"+tokenPagante+"', '"+tokenRecebedor+"', '"+value+"', '"+value+"'", "transferences");
+        Main.getSqlite().insert("pagante, recebedor, value, time", "'"+tokenPagante+"', '"+tokenRecebedor+"', '"+value+"', '"+time+"'", "transferences");
     }
 
     public Transference(String tokenPagante, String tokenRecebedor, long value, long time) {
@@ -57,6 +57,10 @@ public class Transference {
 
     public void setTime(long time) {
         this.time = time;
+    }
+
+    public void readd(){
+        Main.getSqlite().insert("pagante, recebedor, value, time", "'"+tokenPagante+"', '"+tokenRecebedor+"', '"+value+"', '"+time+"'", "transferences");
     }
 }
 
