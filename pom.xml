@@ -38,14 +38,42 @@
             <version>3.1.1</version>
         </dependency>
         <!--
-        Eu estou usando o EJSL em dependência compartilhada, portanto minha versão do EJSL pode estar mais atualizada
-        Mas utilize a versão presente no JitPack que provavelmente é a mais testada!
+        Eu estou usando o EJSL como dependência compartilhada, portanto minha versão do EJSL pode estar mais atualizada.
+        Mas utilize a versão presente no JitPack que provavelmente é a mais testada.
         Se estiver problemas com EJSL não me mande mensagem eu quero q se foda.
         -->
         <dependency>
             <groupId>com.github.SrBalbucio</groupId>
             <artifactId>EssentialJSwingLibrary</artifactId>
-            <version>v0.0.2</version>
+            <version>v0.0.10</version>
+        </dependency>
+
+        <!--
+        Esse projeto usa o JavaFX dentro do Java Swing para fazer alguns WebViews portanto trate de ter as dependências do JavaFX no seu JDK!
+        -->
+        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>20</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-swing -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>20</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>20</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-media -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>20</version>
         </dependency>
     </dependencies>
 

@@ -43,4 +43,8 @@ public class UserManager {
         return newUser;
     }
 
+    public String getUserName(String token){
+        return users.stream().filter(u -> u.getToken().equalsIgnoreCase(token)).findFirst().orElse(new User(token, "20")).getName();
+    }
+
 }

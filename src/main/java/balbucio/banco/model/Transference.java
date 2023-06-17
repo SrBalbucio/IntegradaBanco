@@ -1,5 +1,7 @@
 package balbucio.banco.model;
 
+import balbucio.banco.Main;
+
 import java.util.Date;
 
 public class Transference {
@@ -14,6 +16,7 @@ public class Transference {
         this.tokenRecebedor = tokenRecebedor;
         this.value = value;
         this.time = new Date().getTime();
+        Main.getSqlite().insert("pagador, recebedor, value, time", "'"+tokenPagante+"', '"+tokenRecebedor+"', '"+value+"', '"+value+"'", "transferences");
     }
 
     public Transference(String tokenPagante, String tokenRecebedor, long value, long time) {
