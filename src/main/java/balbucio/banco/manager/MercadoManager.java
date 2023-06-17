@@ -7,6 +7,7 @@ import balbucio.banco.model.User;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.responsivescheduler.RSTask;
 import balbucio.sqlapi.sqlite.SQLiteInstance;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,7 +55,10 @@ public class MercadoManager {
 
     public static List<Acoes> getAcoes(User user){
         if(Main.connected){
-            return (List<Acoes>) Main.request("GETACOES", user);
+            List<String> string = (List<String>) Main.request("GETACOES", new Gson().toJson(user));
+            List<Acoes> acoesG = new ArrayList<>();
+            string.forEach(s -> acoesG.add(new Gson().fromJson(s, Acoes.class)));
+            return acoesG;
         }
         return acoes.stream().filter(a -> a.getRecebedor().equalsIgnoreCase(user.getToken())).toList();
     }

@@ -3,6 +3,7 @@ package balbucio.banco.manager;
 import balbucio.banco.Main;
 import balbucio.banco.model.User;
 import balbucio.sqlapi.sqlite.SQLiteInstance;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +37,7 @@ public class UserManager {
 
     public User getUser(String user, String password){
         if(Main.connected){
-            System.out.println(Main.request("GETUSER", user+":"+password));
-            return (User) Main.request("GETUSER", user+":"+password);
+            return new Gson().fromJson((String) Main.request("GETUSER", user+":"+password), User.class);
         }
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(user) && u.getPassword().equalsIgnoreCase(password)).findFirst().orElse(null);
     }
@@ -47,8 +47,7 @@ public class UserManager {
         if(newUser == null){
             newUser = new User(user, password);
             if(Main.connected){
-                System.out.println(Main.request("CREATEUSER", user+":"+password));
-                return (User) Main.request("CREATEUSER", user+":"+password);
+                return new Gson().fromJson((String) Main.request("GETUSER", user+":"+password), User.class);
             }
             sqlite.insert("name, password, token, saldo", "'"+user+"', '"+password+"', '"+newUser.getToken()+"', '0'", "users");
         }
@@ -65,7 +64,7 @@ public class UserManager {
 
     public User getUserByName(String userName){
         if(Main.connected){
-            return (User) Main.request("GETUSERBYNAME", userName);
+            return new Gson().fromJson((String) Main.request("GETUSER", userName), User.class);
         }
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(userName)).findFirst().orElse(null);
     }

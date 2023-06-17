@@ -4,6 +4,7 @@ import balbucio.banco.frame.LoginFrame;
 import balbucio.banco.manager.MercadoManager;
 import balbucio.banco.manager.TransferenceManager;
 import balbucio.banco.manager.UserManager;
+import balbucio.banco.model.Acoes;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
 import balbucio.org.ejsl.frame.JLoadingFrame;
@@ -15,12 +16,15 @@ import co.gongzh.procbridge.Client;
 import co.gongzh.procbridge.IDelegate;
 import co.gongzh.procbridge.Server;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDeepOceanContrastIJTheme;
+import com.google.gson.Gson;
 import de.milchreis.uibooster.UiBooster;
 import de.milchreis.uibooster.components.WaitingDialog;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
 
@@ -79,23 +83,29 @@ public class Main {
                 System.out.println(o);
                 if(s.equalsIgnoreCase("GETUSER")){
                     String[] cre = ((String) o).split(":");
-                    return UserManager.getInstance().getUser(cre[0], cre[1]);
+                    return new Gson().toJson(UserManager.getInstance().getUser(cre[0], cre[1]));
                 } else if(s.equalsIgnoreCase("EXISTUSER")){
                     String[] cre = ((String) o).split(":");
                     return UserManager.getInstance().existUser(cre[0], cre[1]);
                 } else if(s.equalsIgnoreCase("CREATEUSER")){
                     String[] cre = ((String) o).split(":");
-                    return UserManager.getInstance().createUser(cre[0], cre[1]);
+                    return new Gson().toJson(UserManager.getInstance().createUser(cre[0], cre[1]));
                 } else if(s.equalsIgnoreCase("GETUSERNAME")){
                     return UserManager.getInstance().getUserName((String) o);
                 } else if(s.equalsIgnoreCase("GETUSERBYNAME")){
-                    return UserManager.getInstance().getUserByName((String) o);
+                    return new Gson().toJson(UserManager.getInstance().getUserByName((String) o));
                 } else if(s.equalsIgnoreCase("CREATETRANSFERENCE")){
-                    TransferenceManager.addTransference((Transference) o);
+                    TransferenceManager.addTransference(new Gson().fromJson((String) o, Transference.class));
                 } else if(s.equalsIgnoreCase("GETRANSFERENCES")){
-                    return TransferenceManager.getTransferences((User) o);
+                    List<Transference> transferenceList = TransferenceManager.getTransferences(new Gson().fromJson((String) o, User.class));
+                    List<String> sc = new ArrayList<>();
+                    transferenceList.forEach(t -> sc.add(new Gson().toJson(t)));
+                    return sc;
                 } else if(s.equalsIgnoreCase("GETACOES")){
-                    return MercadoManager.getAcoes((User) o);
+                    List<Acoes> acoesList = MercadoManager.getAcoes(new Gson().fromJson((String) o, User.class));
+                    List<String> sc = new ArrayList<>();
+                    acoesList.forEach(t -> sc.add(new Gson().toJson(t)));
+                    return sc;
                 }
                 return null;
             }
