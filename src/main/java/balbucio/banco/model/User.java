@@ -55,4 +55,12 @@ public class User {
     public void setSaldo(long saldo) {
         this.saldo = saldo;
     }
+
+    public void transference(Transference transference){
+        if(transference.getTokenRecebedor().equalsIgnoreCase(token)){
+            this.saldo += transference.getValue();
+        } else if(transference.getTokenPagante().equalsIgnoreCase(token)){
+            this.saldo -= transference.getValue();
+        }
+    }
 }

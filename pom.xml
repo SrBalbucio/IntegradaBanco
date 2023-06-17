@@ -37,6 +37,11 @@
             <artifactId>flatlaf</artifactId>
             <version>3.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.SrBalbucio</groupId>
+            <artifactId>ResponsiveScheduler</artifactId>
+            <version>v1.0.2</version>
+        </dependency>
         <!--
         Eu estou usando o EJSL como dependência compartilhada, portanto minha versão do EJSL pode estar mais atualizada.
         Mas utilize a versão presente no JitPack que provavelmente é a mais testada.

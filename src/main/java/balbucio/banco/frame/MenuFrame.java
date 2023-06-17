@@ -27,7 +27,9 @@ public class MenuFrame extends JFrame {
 
     public MenuFrame(User user){
         this.user = user;
+        user.setSaldo(0l);
         transferences = TransferenceManager.getTransferences(user);
+        transferences.forEach(t -> user.transference(t));
         this.setSize(640, 480);
         this.setLayout(new BorderLayout());
         this.setVisible(true);
@@ -86,7 +88,7 @@ public class MenuFrame extends JFrame {
         button.add(vender);
         home.add(button);
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         JLabel resumoLabel = new JLabel("Resumo desta semana:");
         resumoLabel.setFont(resumoLabel.getFont().deriveFont(16f));
         panel.add(resumoLabel);
@@ -100,9 +102,11 @@ public class MenuFrame extends JFrame {
                 break;
             }
             i--;
-            models.addRow(new Object[] {UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenPagante()), t.getValue()});
+            models.addRow(new Object[] {UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue()});
         }
         JTable table = new JTable(models);
+        table.setFont(table.getFont().deriveFont(14l));
+        table.setBorder(new EmptyBorder(20, 0, 0, 0));
         panel.add(table);
         home.add(panel);
         return home;

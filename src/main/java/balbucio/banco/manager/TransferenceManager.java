@@ -14,7 +14,7 @@ public class TransferenceManager {
 
     public TransferenceManager(SQLiteInstance sqlite){
         instance = this;
-        List<Object[]> u = sqlite.getAllValuesFromColumns("transferences", "pagador", "recebedor", "value", "time");
+        List<Object[]> u = sqlite.getAllValuesFromColumns("transferences", "pagante", "recebedor", "value", "time");
         for(Object[] t : u){
             transferences.add(new Transference((String) t[0], (String) t[1], (int) t[2], (int) t[3]));
         }
