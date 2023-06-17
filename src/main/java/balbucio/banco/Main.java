@@ -31,11 +31,15 @@ public class Main {
         sqlite.createTable("transferences", "pagante VARCHAR(255), recebedor VARCHAR(255), value BIGINT, time BIGINT");
         sqlite.createTable("acoes", "name VARCHAR(255), recebedor VARCHAR(255), token VARCHAR(255)");
         loadingFrame.setPosition(25);
+        try {
+            scheduler = new ResponsiveScheduler();
+        } catch(Exception e){
+            JOptionPane.showMessageDialog(null, "O agendador não conseguiu iniciar, o mercado de ações está parado!");
+        }
+        loadingFrame.setPosition(50);
         new UserManager(sqlite);
         new TransferenceManager(sqlite);
         new MercadoManager(sqlite);
-        loadingFrame.setPosition(50);
-        scheduler = new ResponsiveScheduler();
         loadingFrame.setPosition(75);
         try {
             UIManager.setLookAndFeel(new FlatMaterialDeepOceanContrastIJTheme());

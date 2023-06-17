@@ -40,6 +40,7 @@ public class UserManager {
             newUser = new User(user, password);
             sqlite.insert("name, password, token, saldo", "'"+user+"', '"+password+"', '"+newUser.getToken()+"', '0'", "users");
         }
+        users.add(newUser);
         return newUser;
     }
 

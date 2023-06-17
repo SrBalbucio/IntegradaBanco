@@ -1,5 +1,6 @@
 package balbucio.banco.frame;
 
+import balbucio.banco.manager.TransferenceManager;
 import balbucio.banco.manager.UserManager;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
@@ -79,7 +80,7 @@ public class LoginFrame extends JFrame {
         register.addActionListener((e) -> {
             if(!UserManager.getInstance().existUser(username.getText(), password.getText())) {
                 User user = UserManager.getInstance().createUser(username.getText(), password.getText());
-                user.transference(new Transference("Banco", user.getToken(), 1500));
+                TransferenceManager.createTransference(user, "Banco", 1500);
                 JOptionPane.showMessageDialog(this, "Seja bem-vindo a sua nova conta balbBank, " + user.getName() + "!");
                 this.dispose();
                 new MenuFrame(user);

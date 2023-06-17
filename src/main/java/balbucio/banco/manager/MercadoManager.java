@@ -14,8 +14,8 @@ import java.util.Map;
 
 public class MercadoManager {
 
-    private static Map<String, Integer> valores = new HashMap<>();
-    private static List<Acoes> acoes = new ArrayList<>();
+    public static Map<String, Integer> valores = new HashMap<>();
+    public static List<Acoes> acoes = new ArrayList<>();
     private static MercadoManager instance;
 
     public MercadoManager(SQLiteInstance sqlite){
@@ -40,7 +40,8 @@ public class MercadoManager {
             public void run() {
                 valores.forEach((s, i) -> valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
                 acoes.forEach(a -> {
-                    new Transference("Mercado de Ações", a.getToken(), valores.get(a.getActionName()));
+                    System.out.println("Mercado se movimentou e o user "+a.getRecebedor()+" ganhou "+valores.get(a.getActionName()));
+                    TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), valores.get(a.getActionName()));
                 });
             }
         }, 0, 10000);

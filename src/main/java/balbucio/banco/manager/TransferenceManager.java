@@ -24,6 +24,17 @@ public class TransferenceManager {
         return transferences.stream().filter(t -> t.getTokenPagante().equalsIgnoreCase(user.getToken()) || t.getTokenRecebedor().equalsIgnoreCase(user.getToken())).toList();
     }
     public static void createTransference(User user, String token, long value){
+        Transference transference = new Transference(token, user.getToken(), value);
+        transferences.add(transference);
+    }
+
+    public static void createTransference(String t, String token, long value){
+        Transference transference = new Transference(t, token, value);
+        transferences.add(transference);
+    }
+
+    public static void removeTransference(User user, String token, long value){
         Transference transference = new Transference(user.getToken(), token, value);
+        transferences.add(transference);
     }
 }

@@ -1,6 +1,7 @@
 package balbucio.banco.model;
 
 import balbucio.banco.Main;
+import balbucio.banco.manager.TransferenceManager;
 
 import java.util.Date;
 

@@ -1,5 +1,7 @@
 package balbucio.banco.model;
 
+import balbucio.banco.Main;
+import balbucio.banco.manager.MercadoManager;
 import balbucio.banco.utils.TokenCreator;
 
 public class Acoes {
@@ -12,6 +14,8 @@ public class Acoes {
         this.token = TokenCreator.createToken(10);
         this.actionName = actionName;
         this.recebedor = recebedor;
+        Main.getSqlite().insert("name, recebedor, token", "'"+actionName+"', '"+recebedor+"', '"+token+"'", "acoes");
+        MercadoManager.acoes.add(this);
     }
 
     public Acoes(String token, String actionName, String recebedor) {
