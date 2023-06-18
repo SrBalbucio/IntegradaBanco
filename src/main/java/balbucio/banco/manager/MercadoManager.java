@@ -33,6 +33,7 @@ public class MercadoManager {
         valores.put("7AA2", 40);
         valores.put("LFA2", 40);
         valores.put("zzA2", 40);
+        valores.put("KLJHS", 40);
 
         List<Object[]> u = sqlite.getAllValuesFromColumns("acoes", "name", "recebedor", "token");
         for(Object[] t : u){

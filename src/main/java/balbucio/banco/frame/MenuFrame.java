@@ -1,10 +1,12 @@
 package balbucio.banco.frame;
 
 import balbucio.banco.Main;
+import balbucio.banco.manager.CobrancaManager;
 import balbucio.banco.manager.MercadoManager;
 import balbucio.banco.manager.TransferenceManager;
 import balbucio.banco.manager.UserManager;
 import balbucio.banco.model.Acoes;
+import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
 import balbucio.org.ejsl.component.EJSLButton;
@@ -13,8 +15,11 @@ import balbucio.org.ejsl.event.ClickListener;
 import balbucio.org.ejsl.utils.ColorUtils;
 import balbucio.org.ejsl.utils.ImageUtils;
 import balbucio.responsivescheduler.RSTask;
+import com.google.gson.Gson;
 import de.milchreis.uibooster.UiBooster;
 import de.milchreis.uibooster.components.WaitingDialog;
+import javafx.scene.chart.ScatterChart;
+import org.json.JSONArray;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -22,9 +27,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MenuFrame extends JFrame {
@@ -32,9 +37,12 @@ public class MenuFrame extends JFrame {
     private User user;
     private List<Transference> transferences = new ArrayList<>();
     private List<Acoes> acoesUser = new ArrayList<>();
-    private DefaultTableModel model;
+    private DefaultTableModel model = new DefaultTableModel();
+    private DefaultTableModel transferenciasmodel = new DefaultTableModel();
     private JLabel saldoText;
     private JTable table;
+    private JTable transferenciasTable;
+    private SimpleDateFormat formate = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     public MenuFrame(User user){
         this.user = user;
@@ -42,6 +50,7 @@ public class MenuFrame extends JFrame {
         transferences = TransferenceManager.getTransferences(user);
         acoesUser = MercadoManager.getAcoes(user);
         transferences.forEach(user::transference);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(640, 480);
         this.setLayout(new BorderLayout());
         this.setVisible(true);
@@ -51,29 +60,70 @@ public class MenuFrame extends JFrame {
         Main.getScheduler().repeatTask(new RSTask() {
             @Override
             public void run() {
-                System.out.println("reset frame");
-                user.setSaldo(0l);
-                transferences = TransferenceManager.getTransferences(user);
-                transferences.forEach(user::transference);
-                acoesUser = MercadoManager.getAcoes(user);
+                try {
+                    System.out.println("reset frame");
+                    user.setSaldo(0l);
+                    if (!Main.connected()) {
+                        CobrancaManager.getCobrancas().getOrDefault(user.getToken(), new ArrayList<>()).forEach(c -> {
+                            Main.getBooster().showConfirmDialog("O usuário " + UserManager.getInstance().getUserName(c.getPedinteToken()) + " quer que você pague $" + c.getValor() + " para ele, você deseja efetuar a transferência?", "Pagamento requisitado", () -> {
+                                if (user.getSaldo() >= c.getValor()) {
+                                    TransferenceManager.removeTransference(user, c.getDevedorToken(), c.getValor());
+                                    CobrancaManager.getCobrancas().get(user.getToken()).remove(c);
+                                } else {
+                                    JOptionPane.showMessageDialog(null, "Você não tem dinheiro para efetuar essa transação!");
+                                }
+                            }, () -> {
+                                CobrancaManager.getCobrancas().get(user.getToken()).remove(c);
+                            });
 
-                model = new DefaultTableModel();
-                model.addColumn("Pagador");
-                model.addColumn("Recebedor");
-                model.addColumn("Valor");
-                int i = 10;
-                for(Transference t : transferences){
-                    if(i == 0){
-                        break;
+                        });
+                    } else {
+                        ((JSONArray) Main.request("GETCOBRANCAS", user.getToken())).forEach(e -> {
+                            Cobranca c = new Gson().fromJson((String) e, Cobranca.class);
+                            Main.getBooster().showConfirmDialog("O usuário " + UserManager.getInstance().getUserName(c.getPedinteToken()) + " quer que você pague $" + c.getValor() + " para ele, você deseja efetuar a transferência?", "Pagamento requisitado", () -> {
+                                if (user.getSaldo() >= c.getValor()) {
+                                    TransferenceManager.removeTransference(user, c.getDevedorToken(), c.getValor());
+                                    Main.request("DELETECOBRANCA", c.getDevedorToken() + ";" + c.getToken());
+                                } else {
+                                    JOptionPane.showMessageDialog(null, "Você não tem dinheiro para efetuar essa transação!");
+                                }
+                            }, () -> {
+                                Main.request("DELETECOBRANCA", c.getDevedorToken() + ";" + c.getToken());
+                            });
+                        });
                     }
-                    i--;
-                    model.addRow(new Object[] {UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue()});
-                }
+                    transferences = TransferenceManager.getTransferences(user);
+                    transferences.forEach(user::transference);
+                    acoesUser = MercadoManager.getAcoes(user);
 
-                table.setModel(model);
-                saldoText.setText("Saldo Atual: $"+user.getSaldo());
+                    model = new DefaultTableModel();
+                    transferenciasmodel = new DefaultTableModel();
+                    model.addColumn("Pagador");
+                    model.addColumn("Recebedor");
+                    model.addColumn("Valor");
+                    transferenciasmodel.addColumn("Pagador");
+                    transferenciasmodel.addColumn("Recebedor");
+                    transferenciasmodel.addColumn("Valor");
+                    transferenciasmodel.addColumn("Data");
+                    int limit = 0;
+                    for (int i = transferences.size() - 1; i > 0; i--) {
+                        Transference t = transferences.get(i);
+                        if (limit <= 10) {
+                            limit++;
+                            model.addRow(new Object[]{UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue()});
+                        }
+                        transferenciasmodel.addRow(new Object[]{UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue(), formate.format(new Date(t.getTime()))});
+                    }
+                    table.setModel(model);
+                    transferenciasTable.setModel(transferenciasmodel);
+                    saldoText.setText("Saldo Atual: $" + user.getSaldo());
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    setProblem(true);
+                    setProblemID(1);
+                }
             }
-        }, 10000, 5000);
+        }, 1000, 5000);
     }
 
     public JPanel northPanel(){
@@ -104,13 +154,24 @@ public class MenuFrame extends JFrame {
     }
 
     private CardLayout menu = new CardLayout();
+    private JPanel center;
 
     public JPanel centerPanel(){
-        JPanel center = new JPanel();
+        center = new JPanel();
         center.setLayout(menu);
         center.add(homePanel(), "HOME");
+        center.add(transferenciaPanel(), "TRANS");
         menu.show(center, "HOME");
         return center;
+    }
+
+    public JScrollPane transferenciaPanel(){
+        JScrollPane panel;
+        this.transferenciasTable = new JTable(transferenciasmodel);
+        transferenciasTable.setFillsViewportHeight(true);
+        panel = new JScrollPane(transferenciasTable);
+        panel.setVisible(true);
+        return panel;
     }
 
     public JPanel homePanel(){
@@ -135,6 +196,21 @@ public class MenuFrame extends JFrame {
         });
 
         JButton receber = new JButton("Receber dinheiro");
+
+        receber.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String userName = Main.getBooster().showTextInputDialog("Para enviar um pedido de pagamento é necessário ser um servidor ou estar conectado a um.\n\nQual é o nome do usuário a ser cobrado?");
+                int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Qual será o valor a ser cobrado?"));
+                User co = UserManager.getInstance().getUserByName(userName);
+                if(co != null) {
+                    CobrancaManager.addCobranca(user, co, valor);
+                    JOptionPane.showMessageDialog(null, "A cobrança foi enviada, porém ela dura apenas enquanto o servidor estiver online.", "Aguardando...", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Esse usuário não existe!", "Usuário Não Encontrado", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
 
         JButton comprar = new JButton("Comprar Ações");
         comprar.addActionListener(new ActionListener() {
@@ -196,17 +272,6 @@ public class MenuFrame extends JFrame {
         resumoLabel.setFont(resumoLabel.getFont().deriveFont(16f));
         panel.add(resumoLabel);
         model = new DefaultTableModel();
-        model.addColumn("Pagador");
-        model.addColumn("Recebedor");
-        model.addColumn("Valor");
-        int i = 10;
-        for(Transference t : transferences){
-            if(i == 0){
-                break;
-            }
-            i--;
-            model.addRow(new Object[] {UserManager.getInstance().getUserName(t.getTokenPagante()), UserManager.getInstance().getUserName(t.getTokenRecebedor()), t.getValue()});
-        }
         table = new JTable(model);
         table.setFont(table.getFont().deriveFont(14l));
         table.setBorder(new EmptyBorder(20, 0, 0, 0));
@@ -223,6 +288,7 @@ public class MenuFrame extends JFrame {
         menu.setLayout(layout);
         //JLabel img = new JLabel(new ImageIcon(ImageUtils.getImage(this.getClass().getResourceAsStream("/images/logo.png"))));
         EJSLButton home = new EJSLButton("Home");
+        home.setSelected(true);
         home.setPrimaryColor(color);
         menu.add(home);
         EJSLButton mercado = new EJSLButton("Mercado");
@@ -230,20 +296,60 @@ public class MenuFrame extends JFrame {
         menu.add(mercado);
         EJSLButton transferencias = new EJSLButton("Transferências");
         transferencias.setPrimaryColor(color);
+        transferencias.setAnimation(true);
         menu.add(transferencias);
         EJSLButton sobre = new EJSLButton("Sobre");
         sobre.setPrimaryColor(color);
         menu.add(sobre);
         EJSLButton sair = new EJSLButton("Sair");
-        sair.getClickListeners().add(new ClickListener() {
-            @Override
-            public void click(EJSLButton ejslButton) {
-                dispose();
-                new LoginFrame();
-            }
-        });
+
         sair.setPrimaryColor(color);
         menu.add(sair);
+
+        home.getClickListeners().add(e -> {
+            this.menu.show(center, "HOME");
+            mercado.setSelected(false);
+            transferencias.setSelected(false);
+            sobre.setSelected(false);
+            revalidateAll();
+        });
+
+        mercado.getClickListeners().add(e -> {
+            e.setSelected(false);
+        });
+
+        transferencias.getClickListeners().add(e -> {
+            this.menu.show(center, "TRANS");
+            home.setSelected(false);
+            mercado.setSelected(false);
+            sobre.setSelected(false);
+            revalidateAll();
+        });
+        sobre.getClickListeners().add(e -> {
+            home.setSelected(false);
+            mercado.setSelected(false);
+            transferencias.setSelected(false);
+            sobre.setSelected(true);
+            revalidateAll();
+        });
+        sair.getClickListeners().add(e -> {
+            dispose();
+            new LoginFrame();
+        });
         return menu;
+    }
+
+    public void revalidateAll(){
+        Arrays.stream(this.getComponents()).toList().forEach(c -> {
+            revalidate(c);
+        });
+    }
+
+    public void revalidate(Component c){
+        if(c instanceof JPanel p){
+            Arrays.stream(p.getComponents()).toList().forEach(cp -> revalidate(cp));
+        }
+        c.revalidate();
+        c.repaint();
     }
 }

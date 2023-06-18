@@ -2,10 +2,12 @@ package balbucio.banco;
 
 import balbucio.banco.frame.LoginFrame;
 import balbucio.banco.listener.TaskListener;
+import balbucio.banco.manager.CobrancaManager;
 import balbucio.banco.manager.MercadoManager;
 import balbucio.banco.manager.TransferenceManager;
 import balbucio.banco.manager.UserManager;
 import balbucio.banco.model.Acoes;
+import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
 import balbucio.banco.utils.NumberUtils;
@@ -150,6 +152,19 @@ public class Main {
                 } else if(s.equalsIgnoreCase("DELETEACAO")){
                     Main.getSqlite().delete("token", (String) o, "acoes");
                     MercadoManager.acoes.stream().filter(a -> a.getToken().equalsIgnoreCase((String) o)).findFirst().ifPresent(a -> MercadoManager.acoes.remove(a));
+                } else if(s.equalsIgnoreCase("GETCOBRANCAS")){
+                    List<String> string = new ArrayList<>();
+                    if(CobrancaManager.cobrancas.containsKey((String) o)){
+                        for(Cobranca c : CobrancaManager.cobrancas.get((String) o)){
+                            string.add(new Gson().toJson(c));
+                        }
+                    }
+                    return string;
+                } else if(s.equalsIgnoreCase("DELETECOBRANCA")){
+                    String[] cre = ((String) o).split(";");
+                    if(CobrancaManager.getCobrancas().containsKey(cre[0])){
+                        CobrancaManager.getCobrancas().get(cre[0]).stream().filter(c -> c.getToken().equalsIgnoreCase(cre[1])).findFirst().ifPresent(e -> CobrancaManager.getCobrancas().get(cre[0]).remove(e));
+                    }
                 }
                 return null;
             }
