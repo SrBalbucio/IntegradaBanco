@@ -29,14 +29,14 @@ public class UserManager {
     }
 
     public boolean existUser(String user, String password){
-        if(Main.connected){
+        if(Main.connected()){
             return (boolean) Main.request("EXISTUSER", user+":"+password);
         }
         return users.stream().anyMatch(u -> u.getName().equalsIgnoreCase(user) && u.getPassword().equalsIgnoreCase(password));
     }
 
     public User getUser(String user, String password){
-        if(Main.connected){
+        if(Main.connected()){
             return new Gson().fromJson((String) Main.request("GETUSER", user+":"+password), User.class);
         }
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(user) && u.getPassword().equalsIgnoreCase(password)).findFirst().orElse(null);
@@ -46,8 +46,8 @@ public class UserManager {
         User newUser = getUser(user, password);
         if(newUser == null){
             newUser = new User(user, password);
-            if(Main.connected){
-                return new Gson().fromJson((String) Main.request("GETUSER", user+":"+password), User.class);
+            if(Main.connected()){
+                return new Gson().fromJson((String) Main.request("CREATEUSER", user+":"+password), User.class);
             }
             sqlite.insert("name, password, token, saldo", "'"+user+"', '"+password+"', '"+newUser.getToken()+"', '0'", "users");
         }
@@ -56,15 +56,15 @@ public class UserManager {
     }
 
     public String getUserName(String token){
-        if(Main.connected){
+        if(Main.connected()){
             return (String) Main.request("GETUSERNAME", token);
         }
         return users.stream().filter(u -> u.getToken().equalsIgnoreCase(token)).findFirst().orElse(new User(token, "20")).getName();
     }
 
     public User getUserByName(String userName){
-        if(Main.connected){
-            return new Gson().fromJson((String) Main.request("GETUSER", userName), User.class);
+        if(Main.connected()){
+            return new Gson().fromJson((String) Main.request("GETUSERBYNAME", userName), User.class);
         }
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(userName)).findFirst().orElse(null);
     }

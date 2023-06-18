@@ -3,6 +3,7 @@ package balbucio.banco.model;
 import balbucio.banco.Main;
 import balbucio.banco.manager.MercadoManager;
 import balbucio.banco.utils.TokenCreator;
+import com.google.gson.Gson;
 
 public class Acoes {
 
@@ -14,6 +15,14 @@ public class Acoes {
         this.token = TokenCreator.createToken(10);
         this.actionName = actionName;
         this.recebedor = recebedor;
+        Main.getSqlite().insert("name, recebedor, token", "'"+actionName+"', '"+recebedor+"', '"+token+"'", "acoes");
+        MercadoManager.acoes.add(this);
+        if(Main.connected()) {
+            Main.request("CREATEACAO", new Gson().toJson(this));
+        }
+    }
+
+    public void reload(){
         Main.getSqlite().insert("name, recebedor, token", "'"+actionName+"', '"+recebedor+"', '"+token+"'", "acoes");
         MercadoManager.acoes.add(this);
     }
@@ -49,6 +58,11 @@ public class Acoes {
     }
 
     public void delete(){
-        Main.getSqlite().delete("token", token, "acoes");
+        if(Main.connected()) {
+            MercadoManager.acoes.remove(this);
+            Main.getSqlite().delete("token", token, "acoes");
+        } else{
+            Main.request("REMOVEACAO", token);
+        }
     }
 }

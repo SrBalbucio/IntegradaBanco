@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MenuFrame extends JFrame {
@@ -50,6 +51,7 @@ public class MenuFrame extends JFrame {
         Main.getScheduler().repeatTask(new RSTask() {
             @Override
             public void run() {
+                System.out.println("reset frame");
                 user.setSaldo(0l);
                 transferences = TransferenceManager.getTransferences(user);
                 transferences.forEach(user::transference);
@@ -119,13 +121,13 @@ public class MenuFrame extends JFrame {
         enviar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String userName = new UiBooster().showTextInputDialog("Qual é o usuário que deseja enviar dinheiro?");
-                int valor = Integer.parseInt(new UiBooster().showTextInputDialog("Quanto você deseja enviar?"));
+                String userName = Main.getBooster().showTextInputDialog("Qual é o usuário que deseja enviar dinheiro?");
+                int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto você deseja enviar?"));
                 User target = UserManager.getInstance().getUserByName(userName);
                 if(target == null){
                     JOptionPane.showMessageDialog(null, "Esse usuário não existe!", "Usuário Não Encontrado", JOptionPane.ERROR_MESSAGE);
                 } else{
-                    WaitingDialog dialog = new UiBooster().showWaitingDialog("Enviando Dinheiro!", "Por favor, aguarde!");
+                    WaitingDialog dialog = Main.getBooster().showWaitingDialog("Enviando Dinheiro!", "Por favor, aguarde!");
                     TransferenceManager.removeTransference(user, target.getToken(), valor);
                     dialog.close();
                 }
@@ -145,7 +147,7 @@ public class MenuFrame extends JFrame {
                     acoes[i.getAndIncrement()] = a + "($"+v+")";
                 });
 
-                List<String> selected = new UiBooster().showMultipleSelection(
+                List<String> selected = Main.getBooster().showMultipleSelection(
                         "Quais ações você deseja comprar?\n\nInstruções: Selecione as ações que deseja comprar (e que você tem dinheiro pra pagar) e aguarde o processamento ser efetuado!\n",
                         "Ações Disponíveis", acoes);
 
@@ -174,7 +176,7 @@ public class MenuFrame extends JFrame {
                     acoes[i.getAndIncrement()] = a.getActionName()+" ($"+MercadoManager.valores.get(a.getActionName())+")";
                 });
 
-                List<String> selected = new UiBooster().showMultipleSelection(
+                List<String> selected = Main.getBooster().showMultipleSelection(
                         "Quais ações você deseja vender?",
                         "Ações Disponíveis", acoes);
 

@@ -47,6 +47,7 @@ public class LoginFrame extends JFrame {
                 }
             }
         });
+        this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         this.setSize(640, 480);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -113,7 +114,7 @@ public class LoginFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 JOptionPane.showMessageDialog(null, "Essa função pode não funcionar corretamente no seu sistema!\nÉ importante entender que seu firewall pode bloquear o uso desta função.\nSe você não conseguir utilizar por favor abra uma issue.");
 
-                new UiBooster().showConfirmDialog(
+                Main.getBooster().showConfirmDialog(
                         "O que você deseja fazer?\nAo clicar SIM você passa a enviar todas as suas ações para um servidor externo\nAo clicar NÃO você se torna um servidor!",
                         "O que fazer?",
                         () -> {

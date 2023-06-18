@@ -8,6 +8,7 @@ import balbucio.banco.utils.NumberUtils;
 import balbucio.responsivescheduler.RSTask;
 import balbucio.sqlapi.sqlite.SQLiteInstance;
 import com.google.gson.Gson;
+import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,27 +38,13 @@ public class MercadoManager {
         for(Object[] t : u){
             acoes.add(new Acoes((String) t[2], (String) t[0], (String) t[1]));
         }
-        Main.getScheduler().repeatTask(new RSTask() {
-            @Override
-            public void run() {
-                if(Main.connected){
-                    valores = (Map<String, Integer>) Main.request("GETACOESVALORES", "");
-                    return;
-                }
-                valores.forEach((s, i) -> valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
-                acoes.forEach(a -> {
-                    System.out.println("Mercado se movimentou e o user "+a.getRecebedor()+" ganhou "+valores.get(a.getActionName()));
-                    TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), valores.get(a.getActionName()));
-                });
-            }
-        }, 0, 10000);
     }
 
     public static List<Acoes> getAcoes(User user){
-        if(Main.connected){
-            List<String> string = (List<String>) Main.request("GETACOES", new Gson().toJson(user));
+        if(Main.connected()){
+            JSONArray string = (JSONArray)  Main.request("GETACOES", new Gson().toJson(user));
             List<Acoes> acoesG = new ArrayList<>();
-            string.forEach(s -> acoesG.add(new Gson().fromJson(s, Acoes.class)));
+            string.forEach(s -> acoesG.add(new Gson().fromJson((String) s, Acoes.class)));
             return acoesG;
         }
         return acoes.stream().filter(a -> a.getRecebedor().equalsIgnoreCase(user.getToken())).toList();
