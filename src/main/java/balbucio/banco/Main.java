@@ -10,6 +10,7 @@ import balbucio.banco.model.Acoes;
 import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
+import balbucio.banco.server.BancoServer;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.org.ejsl.frame.JLoadingFrame;
 import balbucio.org.ejsl.utils.ImageUtils;
@@ -39,7 +40,20 @@ import java.util.Map;
 public class Main {
 
     public static void main(String[] args) {
-        new Main();
+        if(hasArg(args, "--server")){
+            BancoServer.createServer();
+        } else {
+            new Main();
+        }
+    }
+
+    public static boolean hasArg(String[] args, String arg){
+        for(String s : args){
+            if(s.equalsIgnoreCase(arg)){
+                return true;
+            }
+        }
+        return false;
     }
 
     private SQLiteInstance sqlite;
@@ -72,6 +86,7 @@ public class Main {
                     try {
                         System.out.println("Reload do mercado");
                         if (!Main.instance.connected) {
+                            MercadoManager.juros = NumberUtils.getRandomNumber(1, 50);
                             MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
                             MercadoManager.acoes.forEach(a -> {
                                 System.out.println("Mercado se movimentou e o user " + a.getRecebedor() + " ganhou " + MercadoManager.valores.get(a.getActionName()));
@@ -80,6 +95,8 @@ public class Main {
                         }
                     } catch (Exception e){
                         e.printStackTrace();
+                        setProblemID(2);
+                        setProblem(true);
                     }
                 }
             }, 0, 10000);
@@ -115,71 +132,6 @@ public class Main {
 
     public static boolean connected(){
         return instance.connected;
-    }
-
-    public static void createServer(int port){
-        WaitingDialog dialog = getBooster().showWaitingDialog("Criando servidor...", "Please wait!");
-        dialog.setMessage("");
-        instance.server = new Server(port, new IDelegate() {
-            @Override
-            public @Nullable Object handleRequest(@Nullable String s, @Nullable Object o) {
-                System.out.println("REQUEST DO SERVIDOR: "+o);
-                if(s.equalsIgnoreCase("GETUSER")){
-                    String[] cre = ((String) o).split(":");
-                    return new Gson().toJson(UserManager.getInstance().getUser(cre[0], cre[1]));
-                } else if(s.equalsIgnoreCase("EXISTUSER")){
-                    String[] cre = ((String) o).split(":");
-                    return UserManager.getInstance().existUser(cre[0], cre[1]);
-                } else if(s.equalsIgnoreCase("CREATEUSER")){
-                    String[] cre = ((String) o).split(":");
-                    return new Gson().toJson(UserManager.getInstance().createUser(cre[0], cre[1]));
-                } else if(s.equalsIgnoreCase("GETUSERNAME")){
-                    return UserManager.getInstance().getUserName((String) o);
-                } else if(s.equalsIgnoreCase("GETUSERBYNAME")){
-                    return new Gson().toJson(UserManager.getInstance().getUserByName((String) o));
-                } else if(s.equalsIgnoreCase("CREATETRANSFERENCE")){
-                    TransferenceManager.addTransference(new Gson().fromJson((String) o, Transference.class));
-                } else if(s.equalsIgnoreCase("GETRANSFERENCES")){
-                    List<Transference> transferenceList = TransferenceManager.getTransferences(new Gson().fromJson((String) o, User.class));
-                    List<String> sc = new ArrayList<>();
-                    transferenceList.forEach(t -> sc.add(new Gson().toJson(t)));
-                    return sc;
-                } else if(s.equalsIgnoreCase("GETACOES")){
-                    List<Acoes> acoesList = MercadoManager.getAcoes(new Gson().fromJson((String) o, User.class));
-                    List<String> sc = new ArrayList<>();
-                    acoesList.forEach(t -> sc.add(new Gson().toJson(t)));
-                    return sc;
-                } else if(s.equalsIgnoreCase("GETACOESVALORES")){
-                    return MercadoManager.valores;
-                } else if(s.equalsIgnoreCase("CREATEACAO")){
-                    Acoes acao = new Gson().fromJson((String) o, Acoes.class);
-                    acao.reload();
-                } else if(s.equalsIgnoreCase("DELETEACAO")){
-                    Main.getSqlite().delete("token", (String) o, "acoes");
-                    MercadoManager.acoes.stream().filter(a -> a.getToken().equalsIgnoreCase((String) o)).findFirst().ifPresent(a -> MercadoManager.acoes.remove(a));
-                } else if(s.equalsIgnoreCase("GETCOBRANCAS")){
-                    List<String> string = new ArrayList<>();
-                    if(CobrancaManager.cobrancas.containsKey((String) o)){
-                        for(Cobranca c : CobrancaManager.cobrancas.get((String) o)){
-                            string.add(new Gson().toJson(c));
-                        }
-                    }
-                    return string;
-                } else if(s.equalsIgnoreCase("DELETECOBRANCA")){
-                    String[] cre = ((String) o).split(";");
-                    if(CobrancaManager.getCobrancas().containsKey(cre[0])){
-                        CobrancaManager.getCobrancas().get(cre[0]).stream().filter(c -> c.getToken().equalsIgnoreCase(cre[1])).findFirst().ifPresent(e -> CobrancaManager.getCobrancas().get(cre[0]).remove(e));
-                    }
-                }
-                return null;
-            }
-        });
-        instance.server.start();
-        dialog.close();
-        JOptionPane.showMessageDialog(null, "Agora informe aos seus amigos ou usuários o IP e porta a se conectar." +
-                "\nSe vocês estiverem na mesma rede use o IP interno desta máquina." +
-                "\nSe abrir outra aplicação nesta mesma máquina use o IP como localhost." +
-                "\n\nO console apartir de agora será rajado de mensagens relacionadas a conexão.");
     }
 
     public static void connect(String ip, int port){

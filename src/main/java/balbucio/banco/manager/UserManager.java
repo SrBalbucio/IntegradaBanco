@@ -69,4 +69,7 @@ public class UserManager {
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(userName)).findFirst().orElse(null);
     }
 
+    public static List<User> getUsers() {
+        return users;
+    }
 }

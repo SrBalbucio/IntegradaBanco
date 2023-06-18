@@ -22,12 +22,12 @@ public class TaskListener implements Listener {
     @Override
     public void taskFinishedEvent(TaskFinishedEvent taskFinishedEvent) {
         taskFinishedEvent.rerun();
-        System.out.println("Alguma task parou!");
+        System.out.println("Alguma task parou, CODE 5");
     }
 
     @Override
     public void taskProblemEvent(TaskProblemEvent taskProblemEvent) {
-        System.out.println(taskProblemEvent.getProblemID());
+        System.out.println("ERRO NA TAREFA, CODE "+taskProblemEvent.getProblemID());
     }
 
     @Override

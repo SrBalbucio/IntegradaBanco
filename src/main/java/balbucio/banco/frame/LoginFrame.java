@@ -5,6 +5,7 @@ import balbucio.banco.manager.TransferenceManager;
 import balbucio.banco.manager.UserManager;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
+import balbucio.banco.server.BancoServer;
 import balbucio.org.ejsl.component.EJSLButton;
 import balbucio.org.ejsl.event.ClickListener;
 import balbucio.org.ejsl.utils.ImageUtils;
@@ -124,7 +125,7 @@ public class LoginFrame extends JFrame {
                         },
                         () -> {
                             int port = Integer.parseInt(JOptionPane.showInputDialog("Qual é a porta que deseja abrir o servidor?"));
-                            Main.createServer(port);
+                            BancoServer.createServerWithGUI(port);
                         });
             }
         });

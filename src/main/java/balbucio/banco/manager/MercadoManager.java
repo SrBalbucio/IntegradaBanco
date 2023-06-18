@@ -19,6 +19,7 @@ public class MercadoManager {
 
     public static Map<String, Integer> valores = new HashMap<>();
     public static List<Acoes> acoes = new ArrayList<>();
+    public static long juros = 0;
     private static MercadoManager instance;
 
     public MercadoManager(SQLiteInstance sqlite){
@@ -49,5 +50,12 @@ public class MercadoManager {
             return acoesG;
         }
         return acoes.stream().filter(a -> a.getRecebedor().equalsIgnoreCase(user.getToken())).toList();
+    }
+
+    public static Long getJuros(){
+        if(Main.connected()){
+            return (long) Main.request("GETJUROS", "");
+        }
+        return juros;
     }
 }
