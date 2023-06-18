@@ -163,6 +163,7 @@ public class MenuFrame extends JFrame {
         center.add(homePanel(), "HOME");
         center.add(transferenciaPanel(), "TRANS");
         center.add(sobrePanel(), "SOBRE");
+        center.add(new CardFrame(user), "CARD");
         menu.show(center, "HOME");
         return center;
     }
@@ -326,6 +327,9 @@ public class MenuFrame extends JFrame {
         transferencias.setPrimaryColor(color);
         transferencias.setAnimation(true);
         menu.add(transferencias);
+        EJSLButton card = new EJSLButton("Cartão");
+        card.setPrimaryColor(color);
+        menu.add(card);
         EJSLButton sobre = new EJSLButton("Sobre");
         sobre.setPrimaryColor(color);
         menu.add(sobre);
@@ -339,6 +343,7 @@ public class MenuFrame extends JFrame {
             home.setSelected(true);
             mercado.setSelected(false);
             transferencias.setSelected(false);
+            card.setSelected(false);
             sobre.setSelected(false);
             revalidateAll();
         });
@@ -356,6 +361,16 @@ public class MenuFrame extends JFrame {
             home.setSelected(false);
             mercado.setSelected(false);
             transferencias.setSelected(true);
+            card.setSelected(false);
+            sobre.setSelected(false);
+            revalidateAll();
+        });
+        card.getClickListeners().add(e -> {
+            this.menu.show(center, "CARD");
+            home.setSelected(false);
+            mercado.setSelected(false);
+            transferencias.setSelected(false);
+            card.setSelected(true);
             sobre.setSelected(false);
             revalidateAll();
         });
@@ -364,6 +379,7 @@ public class MenuFrame extends JFrame {
             home.setSelected(false);
             mercado.setSelected(false);
             transferencias.setSelected(false);
+            card.setSelected(false);
             sobre.setSelected(true);
             revalidateAll();
         });

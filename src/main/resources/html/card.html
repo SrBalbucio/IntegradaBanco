@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CARD</title>
+</head>
+<body>
+<style>
+    *,
+    *:after,
+    *:before {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        text-decoration: none;
+    }
+
+    html {
+        font-family: "Inter", sans-serif;
+    }
+
+    .wrapper {
+        width: 100%;
+        height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0f101b;
+    }
+
+    .title {
+        text-align: center;
+        margin-top: 55px;
+        color: #fff;
+        font-size: 25px;
+    }
+
+    .card {
+        position: relative;
+        width: 296px;
+        height: 188px;
+        padding: 12px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        border-radius: 16px;
+        border: solid 4px rgba(255, 255, 255, 0.1);
+
+        background-image: url("https://products.ls.graphics/mesh-gradients/images/78.-Night-sky.jpg");
+        background-position: center;
+        background-size: cover;
+
+        box-shadow: rgba(255, 255, 255, 0.25) 0px 54px 55px,
+        rgba(255, 255, 255, 0.12) 0px -12px 30px,
+        rgba(255, 255, 255, 0.12) 0px 4px 6px,
+        rgba(255, 255, 255, 0.17) 0px 12px 13px,
+        rgba(255, 255, 255, 0.09) 0px -3px 5px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    h3 {
+        font-size: 11px;
+    }
+
+    p {
+        font-size: 8px;
+    }
+
+    section {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .top,
+    .bottom {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .top img {
+        width: 20px;
+    }
+
+    .brand {
+        height: 20px;
+        mix-blend-mode: overlay;
+    }
+
+    .infos {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .infos--bottom {
+        display: flex;
+        gap: 20px;
+    }
+
+    .card-number {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+</style>
+<div class="wrapper">
+    <div class="container">
+        <div class="card">
+            <div class="top">
+                <h2>{name}</h2>
+                <img src="https://cdn-icons-png.flaticon.com/512/1436/1436392.png" />
+            </div>
+            <div class="infos">
+                <section class="card-number">
+                    <p>Card Number</p>
+                    <h1>5495 9549 2883 2434</h1>
+                </section>
+                <div class="bottom">
+                    <aside class="infos--bottom">
+                        <section>
+                            <p>Expiry date</p>
+                            <h3>08/24</h3>
+                        </section>
+                        <section>
+                            <p>CVV</p>
+                            <h3>748</h3>
+                        </section>
+                    </aside>
+                    <aside>
+                        <section>
+                            <img src="https://seeklogo.com/images/V/VISA-logo-DD37676279-seeklogo.com.png" class="brand" />
+                        </section>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
