@@ -19,6 +19,7 @@ public class MercadoManager {
 
     public static Map<String, Integer> valores = new HashMap<>();
     public static List<Acoes> acoes = new ArrayList<>();
+    public static Map<Long, Long> jurosHistory = new HashMap<>();
     public static long juros = 0;
     private static MercadoManager instance;
 
@@ -57,5 +58,9 @@ public class MercadoManager {
             return (long) Main.request("GETJUROS", "");
         }
         return juros;
+    }
+
+    public static Map<Long, Long> getJurosHistory() {
+        return jurosHistory;
     }
 }

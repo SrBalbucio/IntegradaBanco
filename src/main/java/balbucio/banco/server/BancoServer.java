@@ -11,6 +11,7 @@ import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
 import balbucio.banco.server.command.CommandManager;
+import balbucio.banco.task.ImpostoTask;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.responsivescheduler.RSTask;
 import balbucio.responsivescheduler.ResponsiveScheduler;
@@ -50,19 +51,20 @@ public class BancoServer {
             public void run() {
                 try {
                     System.out.println("Reload do mercado");
-                        MercadoManager.juros = NumberUtils.getRandomNumber(1, 50);
-                        MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
-                        MercadoManager.acoes.forEach(a -> {
-                            System.out.println("Mercado se movimentou e o user " + a.getRecebedor() + " ganhou " + MercadoManager.valores.get(a.getActionName()));
-                            TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), MercadoManager.valores.get(a.getActionName()));
-                        });
-                } catch (Exception e){
+                    MercadoManager.juros = NumberUtils.getRandomNumber(1, 50);
+                    MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
+                    MercadoManager.acoes.forEach(a -> {
+                        System.out.println("Mercado se movimentou e o user " + a.getRecebedor() + " ganhou " + MercadoManager.valores.get(a.getActionName()));
+                        TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), MercadoManager.valores.get(a.getActionName()));
+                    });
+                } catch (Exception e) {
                     e.printStackTrace();
                     setProblemID(2);
                     setProblem(true);
                 }
             }
         }, 1000, 10000);
+        scheduler.repeatTask(new ImpostoTask(), 0, 20000);
         new UserManager(sqlite);
         new TransferenceManager(sqlite);
         new MercadoManager(sqlite);

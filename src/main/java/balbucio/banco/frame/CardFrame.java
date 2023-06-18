@@ -32,9 +32,11 @@ public class CardFrame extends JPanel {
         this.addComponentListener(new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
-                jfxPanel.setPreferredSize(getSize());
-                browser.setMaxSize(jfxPanel.getWidth(), jfxPanel.getHeight());
-                browser.setMinSize(jfxPanel.getWidth(), jfxPanel.getHeight());
+                if(jfxPanel != null && browser != null) {
+                    jfxPanel.setPreferredSize(getSize());
+                    browser.setMaxSize(jfxPanel.getWidth(), jfxPanel.getHeight());
+                    browser.setMinSize(jfxPanel.getWidth(), jfxPanel.getHeight());
+                }
             }
 
             @Override

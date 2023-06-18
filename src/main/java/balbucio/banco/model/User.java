@@ -63,4 +63,8 @@ public class User {
             this.saldo -= transference.getValue();
         }
     }
+
+    public User clone(){
+        return new User(token, name, password, saldo);
+    }
 }

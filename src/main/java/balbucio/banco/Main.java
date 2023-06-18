@@ -11,6 +11,7 @@ import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
 import balbucio.banco.server.BancoServer;
+import balbucio.banco.task.ImpostoTask;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.org.ejsl.frame.JLoadingFrame;
 import balbucio.org.ejsl.utils.ImageUtils;
@@ -34,6 +35,7 @@ import org.json.JSONObject;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -86,11 +88,12 @@ public class Main {
                     try {
                         System.out.println("Reload do mercado");
                         if (!Main.instance.connected) {
-                            MercadoManager.juros = NumberUtils.getRandomNumber(1, 50);
-                            MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
+                            MercadoManager.juros = NumberUtils.getRandomNumber(20, 90);
+                            MercadoManager.jurosHistory.put(new Date().getTime(), MercadoManager.juros);
+                            MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(-300, 500)));
                             MercadoManager.acoes.forEach(a -> {
                                 System.out.println("Mercado se movimentou e o user " + a.getRecebedor() + " ganhou " + MercadoManager.valores.get(a.getActionName()));
-                                TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), MercadoManager.valores.get(a.getActionName()));
+                                TransferenceManager.createTransference("Mercado de Ações ("+a.getActionName()+")", a.getRecebedor(), MercadoManager.valores.get(a.getActionName()));
                             });
                         }
                     } catch (Exception e){
@@ -100,6 +103,7 @@ public class Main {
                     }
                 }
             }, 0, 10000);
+            scheduler.repeatTask(new ImpostoTask(), 0, 20000);
         } catch(Exception e){
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "O agendador não conseguiu iniciar, o mercado de ações está parado!");
@@ -148,6 +152,9 @@ public class Main {
                         MercadoManager.valores.clear();
                         JSONObject obj = (JSONObject) request("GETACOESVALORES", "VALORES DO MERCADO");
                         obj.keySet().forEach(e -> MercadoManager.valores.put(e, obj.getInt(e)));
+                        MercadoManager.jurosHistory.clear();
+                        JSONObject oobj = (JSONObject) request("GETJUROSHISTORY", "VALORES DOS JUROS");
+                        oobj.keySet().forEach(e -> MercadoManager.jurosHistory.put(Long.parseLong(e), obj.getLong(e)));
                     } catch (Exception e){
                         e.printStackTrace();
                         setProblem(true);

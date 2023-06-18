@@ -58,6 +58,11 @@
             <artifactId>procbridge</artifactId>
             <version>1.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.jfree</groupId>
+            <artifactId>jfreechart</artifactId>
+            <version>1.5.3</version>
+        </dependency>
         <!--
         Eu estou usando o EJSL como dependência compartilhada, portanto minha versão do EJSL pode estar mais atualizada.
         Mas utilize a versão presente no JitPack que provavelmente é a mais testada.

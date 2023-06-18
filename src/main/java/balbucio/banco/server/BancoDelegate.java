@@ -69,6 +69,8 @@ public class BancoDelegate implements IDelegate {
             }
         } else if(s.equalsIgnoreCase("GETJUROS")){
             return MercadoManager.juros;
+        } else if(s.equalsIgnoreCase("GETJUROSHISTORY")){
+            return new Gson().toJson(MercadoManager.jurosHistory);
         }
         return null;
     }
