@@ -46,6 +46,7 @@ public class MenuFrame extends JFrame {
 
     public MenuFrame(User user){
         super("balbBank - "+user.getName());
+        WaitingDialog dialog = Main.getBooster().showWaitingDialog("Por favor, aguarde enquanto carregamos todos os detalhes da sua conta!", "Carregando sua conta!");
         this.user = user;
         user.setSaldo(0l);
         transferences = TransferenceManager.getTransferences(user);
@@ -54,7 +55,6 @@ public class MenuFrame extends JFrame {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(1024, 640);
         this.setLayout(new BorderLayout());
-        this.setVisible(true);
         this.add(menuPanel(), BorderLayout.WEST);
         this.add(northPanel(), BorderLayout.NORTH);
         this.add(centerPanel(), BorderLayout.CENTER);
@@ -125,6 +125,8 @@ public class MenuFrame extends JFrame {
                 }
             }
         }, 1000, 5000);
+        this.setVisible(true);
+        dialog.close();
     }
 
     public JPanel northPanel(){

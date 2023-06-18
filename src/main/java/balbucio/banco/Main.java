@@ -54,6 +54,7 @@ public class Main {
         instance = this;
         JLoadingFrame loadingFrame = new JLoadingFrame("Loading", ImageUtils.getImage("https://img.freepik.com/free-vector/bank-building-with-cityscape_1284-52265.jpg?w=2000"), 100);
         sqliteConfig = new SqliteConfig(new File("database.db"));
+        sqliteConfig.setMaxRows(Integer.MAX_VALUE);
         sqliteConfig.createFile();
         sqlite = new SQLiteInstance(sqliteConfig);
         sqlite.createTable("users", "name VARCHAR(255), password VARCHAR(255), token VARCHAR(255), saldo BIGINT");
