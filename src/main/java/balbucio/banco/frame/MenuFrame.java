@@ -52,7 +52,7 @@ public class MenuFrame extends JFrame {
         acoesUser = MercadoManager.getAcoes(user);
         transferences.forEach(user::transference);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(640, 480);
+        this.setSize(1024, 640);
         this.setLayout(new BorderLayout());
         this.setVisible(true);
         this.add(menuPanel(), BorderLayout.WEST);
@@ -202,8 +202,8 @@ public class MenuFrame extends JFrame {
     }
 
     public JPanel homePanel(){
-        JPanel home = new JPanel();
-        JPanel button = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel home = new JPanel(new BorderLayout());
+        JPanel button = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton enviar = new JButton("Enviar dinheiro");
 
         enviar.addActionListener(new ActionListener() {
@@ -292,18 +292,22 @@ public class MenuFrame extends JFrame {
         button.add(receber);
         button.add(comprar);
         button.add(vender);
-        home.add(button);
+        home.add(button, BorderLayout.NORTH);
         JPanel panel = new JPanel();
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         JLabel resumoLabel = new JLabel("Resumo desta semana:");
         resumoLabel.setFont(resumoLabel.getFont().deriveFont(16f));
         panel.add(resumoLabel);
         model = new DefaultTableModel();
         table = new JTable(model);
+        table.setLayout(new FlowLayout(FlowLayout.CENTER));
+        table.setFillsViewportHeight(true);
         table.setFont(table.getFont().deriveFont(14l));
         table.setBorder(new EmptyBorder(20, 0, 0, 0));
         panel.add(table);
-        home.add(panel);
+        JScrollPane pane = new JScrollPane(panel);
+        home.add(pane, BorderLayout.CENTER);
         return home;
     }
 
@@ -366,13 +370,19 @@ public class MenuFrame extends JFrame {
             revalidateAll();
         });
         card.getClickListeners().add(e -> {
-            this.menu.show(center, "CARD");
-            home.setSelected(false);
-            mercado.setSelected(false);
-            transferencias.setSelected(false);
-            card.setSelected(true);
-            sobre.setSelected(false);
-            revalidateAll();
+            String password = Main.getBooster().showPasswordDialog("Importante: Se seu cartão não aparecer tente trocar o seu JDK pelo Amazon Corretto 20.\nPor favor, confirme sua senha antes de ver seu cartão:", "Confirme sua senha");
+            if(password.equalsIgnoreCase(user.getPassword())) {
+                this.menu.show(center, "CARD");
+                home.setSelected(false);
+                mercado.setSelected(false);
+                transferencias.setSelected(false);
+                card.setSelected(true);
+                sobre.setSelected(false);
+                revalidateAll();
+            } else{
+                JOptionPane.showMessageDialog(null, "Você errou sua senha, por isso iremos te desconectar do app.");
+                this.dispose();
+            }
         });
         sobre.getClickListeners().add(e -> {
             this.menu.show(center, "SOBRE");

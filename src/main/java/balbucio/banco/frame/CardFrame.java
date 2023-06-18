@@ -12,7 +12,10 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.File;
 import java.util.Scanner;
 
@@ -25,6 +28,30 @@ public class CardFrame extends JPanel {
     private User user;
 
     public CardFrame(User user){
+        super(new BorderLayout());
+        this.addComponentListener(new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                jfxPanel.setPreferredSize(getSize());
+                browser.setMaxSize(jfxPanel.getWidth(), jfxPanel.getHeight());
+                browser.setMinSize(jfxPanel.getWidth(), jfxPanel.getHeight());
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+
+            }
+        });
         this.user = user;
         jfxPanel = new JFXPanel();
         PlatformImpl.startup(new Runnable() {
@@ -55,7 +82,8 @@ public class CardFrame extends JPanel {
                 jfxPanel.setScene(scene);
             }
         });
-        this.add(jfxPanel);
+        this.setEnabled(true);
+        this.add(jfxPanel, BorderLayout.CENTER);
         this.setVisible(true);
     }
 }
