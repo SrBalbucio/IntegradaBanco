@@ -68,13 +68,17 @@ public class Main {
             scheduler.repeatTask(new RSTask() {
                 @Override
                 public void run() {
-                    System.out.println("Reload do mercado");
-                    if(!Main.instance.connected) {
-                        MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
-                        MercadoManager.acoes.forEach(a -> {
-                            System.out.println("Mercado se movimentou e o user " + a.getRecebedor() + " ganhou " + MercadoManager.valores.get(a.getActionName()));
-                            TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), MercadoManager.valores.get(a.getActionName()));
-                        });
+                    try {
+                        System.out.println("Reload do mercado");
+                        if (!Main.instance.connected) {
+                            MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(40, 150)));
+                            MercadoManager.acoes.forEach(a -> {
+                                System.out.println("Mercado se movimentou e o user " + a.getRecebedor() + " ganhou " + MercadoManager.valores.get(a.getActionName()));
+                                TransferenceManager.createTransference("Mercado de Ações", a.getRecebedor(), MercadoManager.valores.get(a.getActionName()));
+                            });
+                        }
+                    } catch (Exception e){
+                        e.printStackTrace();
                     }
                 }
             }, 0, 10000);

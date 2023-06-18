@@ -45,6 +45,7 @@ public class MenuFrame extends JFrame {
     private SimpleDateFormat formate = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     public MenuFrame(User user){
+        super("balbBank - "+user.getName());
         this.user = user;
         user.setSaldo(0l);
         transferences = TransferenceManager.getTransferences(user);
@@ -161,8 +162,33 @@ public class MenuFrame extends JFrame {
         center.setLayout(menu);
         center.add(homePanel(), "HOME");
         center.add(transferenciaPanel(), "TRANS");
+        center.add(sobrePanel(), "SOBRE");
         menu.show(center, "HOME");
         return center;
+    }
+
+    public JPanel sobrePanel(){
+        Color color = ColorUtils.hexToRgb("#0f101b");
+        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.white);
+        JPanel text = new JPanel();
+        text.setBackground(Color.white);
+        text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
+        JImage image = new JImage(ImageUtils.getImage("https://logosmarcas.net/wp-content/uploads/2020/12/GitHub-Logo-650x366.png"));
+        image.setPreferredSize(new Dimension(128, 128));
+        image.setMaxSize(true);
+        image.setCenter(true);
+        image.setBackground(Color.white);
+        JLabel label = new JLabel("Feito pelo SrBalbucio");
+        label.setFont(label.getFont().deriveFont(16l));
+        JLabel version = new JLabel("Versão 1.0 - License GPL V3");
+        version.setFont(label.getFont().deriveFont(14l));
+        text.add(image);
+        text.add(label);
+        text.add(version);
+        panel.add(text);
+        return panel;
     }
 
     public JScrollPane transferenciaPanel(){
@@ -280,6 +306,8 @@ public class MenuFrame extends JFrame {
         return home;
     }
 
+    private MercadoDeAcoesFrame mercadoDeAcoesFrame = null;
+
     public JPanel menuPanel(){
         JPanel menu = new JPanel();
         Color color = ColorUtils.hexToRgb("#171826");
@@ -291,7 +319,7 @@ public class MenuFrame extends JFrame {
         home.setSelected(true);
         home.setPrimaryColor(color);
         menu.add(home);
-        EJSLButton mercado = new EJSLButton("Mercado");
+        EJSLButton mercado = new EJSLButton("Mercado de Ações");
         mercado.setPrimaryColor(color);
         menu.add(mercado);
         EJSLButton transferencias = new EJSLButton("Transferências");
@@ -308,6 +336,7 @@ public class MenuFrame extends JFrame {
 
         home.getClickListeners().add(e -> {
             this.menu.show(center, "HOME");
+            home.setSelected(true);
             mercado.setSelected(false);
             transferencias.setSelected(false);
             sobre.setSelected(false);
@@ -316,16 +345,22 @@ public class MenuFrame extends JFrame {
 
         mercado.getClickListeners().add(e -> {
             e.setSelected(false);
+            if(mercadoDeAcoesFrame != null && mercadoDeAcoesFrame.isActive()){
+                mercadoDeAcoesFrame.dispose();
+            }
+            mercadoDeAcoesFrame = new MercadoDeAcoesFrame();
         });
 
         transferencias.getClickListeners().add(e -> {
             this.menu.show(center, "TRANS");
             home.setSelected(false);
             mercado.setSelected(false);
+            transferencias.setSelected(true);
             sobre.setSelected(false);
             revalidateAll();
         });
         sobre.getClickListeners().add(e -> {
+            this.menu.show(center, "SOBRE");
             home.setSelected(false);
             mercado.setSelected(false);
             transferencias.setSelected(false);
