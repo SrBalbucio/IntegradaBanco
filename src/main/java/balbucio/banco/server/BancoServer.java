@@ -2,10 +2,7 @@ package balbucio.banco.server;
 
 import balbucio.banco.Main;
 import balbucio.banco.listener.TaskListener;
-import balbucio.banco.manager.CobrancaManager;
-import balbucio.banco.manager.MercadoManager;
-import balbucio.banco.manager.TransferenceManager;
-import balbucio.banco.manager.UserManager;
+import balbucio.banco.manager.*;
 import balbucio.banco.model.Acoes;
 import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
@@ -68,6 +65,7 @@ public class BancoServer {
         new UserManager(sqlite);
         new TransferenceManager(sqlite);
         new MercadoManager(sqlite);
+        new EmprestimoManager();
         server = new Server(25565, new BancoDelegate());
         server.start();
         CommandManager manager = new CommandManager();

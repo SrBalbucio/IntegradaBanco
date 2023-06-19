@@ -1,14 +1,9 @@
 package balbucio.banco.frame;
 
 import balbucio.banco.Main;
-import balbucio.banco.manager.CobrancaManager;
-import balbucio.banco.manager.MercadoManager;
-import balbucio.banco.manager.TransferenceManager;
-import balbucio.banco.manager.UserManager;
-import balbucio.banco.model.Acoes;
-import balbucio.banco.model.Cobranca;
-import balbucio.banco.model.Transference;
-import balbucio.banco.model.User;
+import balbucio.banco.manager.*;
+import balbucio.banco.model.*;
+import balbucio.banco.utils.NumberUtils;
 import balbucio.org.ejsl.component.EJSLButton;
 import balbucio.org.ejsl.component.JImage;
 import balbucio.org.ejsl.event.ClickListener;
@@ -48,9 +43,11 @@ public class MenuFrame extends JFrame {
     private DefaultTableModel transferenciasmodel = new DefaultTableModel();
     private JLabel saldoText;
     private JLabel jurosLabel;
-    private JLabel lucroLabel;
+    private JLabel cofreLabel;
+    private JLabel cofreJurosLabel;
     private JTable table;
     private JTable transferenciasTable;
+    private JTable emprestimosTable;
     private ChartPanel chartpanel;
     private ChartPanel lucrochart;
     private SimpleDateFormat formate = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -75,8 +72,14 @@ public class MenuFrame extends JFrame {
                 try {
                     System.out.println("reset frame");
                     user.setSaldo(0l);
+
+                    transferences = TransferenceManager.getTransferences(user);
+                    transferences.forEach(user::transference);
+                    acoesUser = MercadoManager.getAcoes(user);
+
                     if (!Main.connected()) {
                         CobrancaManager.getCobrancas().getOrDefault(user.getToken(), new ArrayList<>()).forEach(c -> {
+                            Main.getBooster().createNotification("O usuário "+UserManager.getInstance().getUserName(c.getPedinteToken())+" está te cobrando!", "Nova Cobrança!");
                             Main.getBooster().showConfirmDialog("O usuário " + UserManager.getInstance().getUserName(c.getPedinteToken()) + " quer que você pague $" + c.getValor() + " para ele, você deseja efetuar a transferência?", "Pagamento requisitado", () -> {
                                 if (user.getSaldo() >= c.getValor()) {
                                     TransferenceManager.removeTransference(user, c.getDevedorToken(), c.getValor());
@@ -104,9 +107,6 @@ public class MenuFrame extends JFrame {
                             });
                         });
                     }
-                    transferences = TransferenceManager.getTransferences(user);
-                    transferences.forEach(user::transference);
-                    acoesUser = MercadoManager.getAcoes(user);
 
                     saldo.put(new Date().getTime(), user.getSaldo());
 
@@ -131,7 +131,7 @@ public class MenuFrame extends JFrame {
                     table.setModel(model);
                     transferenciasTable.setModel(transferenciasmodel);
                     saldoText.setText("Saldo Atual: $" + user.getSaldo());
-                    jurosLabel.setText("O juros atual está em: $" + MercadoManager.getJuros());
+                    jurosLabel.setText("O juros atual está em: %" + MercadoManager.getJuros());
                     DefaultCategoryDataset ldata = new DefaultCategoryDataset();
                     List<Map.Entry<Long, Long>> svlues = saldo.entrySet().stream().toList();
                     limit = 0;
@@ -165,6 +165,14 @@ public class MenuFrame extends JFrame {
                             data, PlotOrientation.VERTICAL,
                             true, true, false);
                     chartpanel.setChart(jurosChart);
+
+                    DefaultTableModel emmodel = new DefaultTableModel();
+                    emmodel.addColumn("Valor");
+                    emmodel.addColumn("Vencimento");
+                    for(Emprestimo e : EmprestimoManager.getEmprestimos(user)){
+                        emmodel.addRow(new Object[]{e.getValor(), formate.format(new Date(e.getMaxTime()))});
+                    }
+                    emprestimosTable.setModel(emmodel);
                 } catch (Exception e) {
                     e.printStackTrace();
                     setProblem(true);
@@ -213,6 +221,7 @@ public class MenuFrame extends JFrame {
         center.add(transferenciaPanel(), "TRANS");
         center.add(sobrePanel(), "SOBRE");
         center.add(new CardFrame(user), "CARD");
+        center.add(emprestimosPanel(), "EMP");
         menu.show(center, "HOME");
         return center;
     }
@@ -248,6 +257,76 @@ public class MenuFrame extends JFrame {
         panel = new JScrollPane(transferenciasTable);
         panel.setVisible(true);
         return panel;
+    }
+
+    public JPanel emprestimosPanel() {
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton addEmp = new JButton("Pegar Emprestimo");
+        addEmp.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto dinheiro você quer pegar neste emprestimo?"));
+                boolean confirm = Main.getBooster().showConfirmDialog("Você aceita pegar $" + valor + " e pagar esse valor mais 15% do juros atual?", "Confirme o emprestimo");
+                if (confirm) {
+                    TransferenceManager.createTransference(user, "Banco (Emprestimo)", valor);
+                    EmprestimoManager.createEmprestimo(user, valor);
+                    JOptionPane.showMessageDialog(null, "Você pegou um emprestimo!\nSe você não pagar ele a tempo você terá que pagar o valor do empréstimo + o juros atual.");
+                }
+            }
+        });
+        JButton pagarEmp = new JButton("Pagar Emprestimo");
+
+        pagarEmp.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                List<Emprestimo> em = EmprestimoManager.getEmprestimos(user);
+                String[] ab = new String[em.size()];
+
+                for (int i = 0; i < em.size(); i++) {
+                    ab[i] = "$"+em.get(i).getValor()+" / "+em.get(i).getToken();
+                }
+
+                List<String> list = Main.getBooster().showMultipleSelection("Quais emprestimos você deseja pagar agora?", "Emprestimos a pagar",true, ab);
+
+                for(String emp : list){
+                    String[] cre = emp.split(" / ");
+                    em.stream().filter(emc -> emc.getToken().equalsIgnoreCase(cre[1])).findFirst().ifPresent(emc -> {
+                        if(user.getSaldo() >= emc.getValor()) {
+                            TransferenceManager.removeTransference(user, "Banco (Emprestimo)", emc.getValor());
+                        } else{
+                            JOptionPane.showMessageDialog(null, "Você não tem dinheiro suficiente para pagar este empréstimo.");
+                        }
+
+                    });
+                    EmprestimoManager.deleteEmprestimo(cre[1]);
+                }
+            }
+        });
+        buttons.add(addEmp);
+        buttons.add(pagarEmp);
+        JScrollPane panel;
+        DefaultTableModel model = new DefaultTableModel();
+        this.emprestimosTable = new JTable(model);
+        emprestimosTable.setFillsViewportHeight(true);
+        panel = new JScrollPane(emprestimosTable);
+        panel.setVisible(true);
+        p.add(buttons);
+        p.add(panel);
+        return p;
+    }
+
+    public JPanel cofrePanel(){
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton add = new JButton("Adicionar dinheiro");
+        JButton pegar = new JButton("Pegar dinheiro");
+        cofreLabel = new JLabel("O saldo do seu cofrinho é $");
+        cofreJurosLabel = new JLabel("O cofre está redendendo %");
+        p.add(buttons);
+        return p;
     }
 
     public JPanel homePanel() {
@@ -301,6 +380,8 @@ public class MenuFrame extends JFrame {
                 MercadoManager.valores.forEach((a, v) -> {
                     if(v > 0){
                         acoes[i.getAndIncrement()] = a + "($" + v + ")";
+                    } else{
+                        acoes[i.getAndIncrement()] = a + "($" + 0 + ")";
                     }
                 });
 
@@ -373,16 +454,16 @@ public class MenuFrame extends JFrame {
                         "Qual tipo de aposta você deseja fazer?",
                         "Escolha o tipo de aposta",
                         Arrays.asList("Chutar Número (1)"));
-                int x = r.nextInt(10);
+                int x = NumberUtils.getRandomNumber(2, 10);
                 int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto deseja apostar nessa?\n\nSe você acertar irá ganhar "+x+"X em cima do valor apostado."));
                 if(selection.contains("1")){
                     int value =Main.getBooster().showSlider("Selecione o número que deseja chutar!", "Chute um número (Aposta)", 0, 10, 5);
                     int n = r.nextInt(10);
                     if(n == value){
-                        TransferenceManager.createTransference(user, "Cassino", value * x);
-                        JOptionPane.showMessageDialog(null, "Você acertou e recebeu "+value*x+"!");
+                        TransferenceManager.createTransference(user, "Cassino", valor * x);
+                        JOptionPane.showMessageDialog(null, "Você acertou e recebeu "+valor*x+"!");
                     } else{
-                        TransferenceManager.removeTransference(user, "Cassino", value);
+                        TransferenceManager.removeTransference(user, "Cassino", valor);
                         JOptionPane.showMessageDialog(null, "Você perdeu, era "+n+"!");
                     }
                 }
@@ -408,7 +489,7 @@ public class MenuFrame extends JFrame {
         JPanel panel = new JPanel();
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        jurosLabel = new JLabel("O juros atual está em: " + MercadoManager.getJuros());
+        jurosLabel = new JLabel("O juros atual está em %" + MercadoManager.getJuros());
         jurosLabel.setFont(jurosLabel.getFont().deriveFont(16l));
         DefaultCategoryDataset ldata = new DefaultCategoryDataset();
         JFreeChart lucro = ChartFactory.createLineChart(
@@ -465,6 +546,10 @@ public class MenuFrame extends JFrame {
         transferencias.setPrimaryColor(color);
         transferencias.setAnimation(true);
         menu.add(transferencias);
+        EJSLButton emprestimo = new EJSLButton("Emprestimos");
+        emprestimo.setPrimaryColor(color);
+        emprestimo.setAnimation(true);
+        menu.add(emprestimo);
         EJSLButton card = new EJSLButton("Cartão");
         card.setPrimaryColor(color);
         menu.add(card);
@@ -481,6 +566,7 @@ public class MenuFrame extends JFrame {
             home.setSelected(true);
             mercado.setSelected(false);
             transferencias.setSelected(false);
+            emprestimo.setSelected(false);
             card.setSelected(false);
             sobre.setSelected(false);
             revalidateAll();
@@ -494,11 +580,23 @@ public class MenuFrame extends JFrame {
             mercadoDeAcoesFrame = new MercadoDeAcoesFrame();
         });
 
+        emprestimo.addClickListener(e -> {
+            this.menu.show(center, "EMP");
+            home.setSelected(false);
+            mercado.setSelected(false);
+            transferencias.setSelected(false);
+            emprestimo.setSelected(true);
+            card.setSelected(false);
+            sobre.setSelected(false);
+            revalidateAll();
+        });
+
         transferencias.getClickListeners().add(e -> {
             this.menu.show(center, "TRANS");
             home.setSelected(false);
             mercado.setSelected(false);
             transferencias.setSelected(true);
+            emprestimo.setSelected(false);
             card.setSelected(false);
             sobre.setSelected(false);
             revalidateAll();
@@ -510,6 +608,7 @@ public class MenuFrame extends JFrame {
                 home.setSelected(false);
                 mercado.setSelected(false);
                 transferencias.setSelected(false);
+                emprestimo.setSelected(false);
                 card.setSelected(true);
                 sobre.setSelected(false);
                 revalidateAll();
@@ -523,6 +622,7 @@ public class MenuFrame extends JFrame {
             home.setSelected(false);
             mercado.setSelected(false);
             transferencias.setSelected(false);
+            emprestimo.setSelected(false);
             card.setSelected(false);
             sobre.setSelected(true);
             revalidateAll();

@@ -1,14 +1,8 @@
 package balbucio.banco.server;
 
 import balbucio.banco.Main;
-import balbucio.banco.manager.CobrancaManager;
-import balbucio.banco.manager.MercadoManager;
-import balbucio.banco.manager.TransferenceManager;
-import balbucio.banco.manager.UserManager;
-import balbucio.banco.model.Acoes;
-import balbucio.banco.model.Cobranca;
-import balbucio.banco.model.Transference;
-import balbucio.banco.model.User;
+import balbucio.banco.manager.*;
+import balbucio.banco.model.*;
 import co.gongzh.procbridge.IDelegate;
 import com.google.gson.Gson;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +28,9 @@ public class BancoDelegate implements IDelegate {
             return UserManager.getInstance().getUserName((String) o);
         } else if(s.equalsIgnoreCase("GETUSERBYNAME")){
             return new Gson().toJson(UserManager.getInstance().getUserByName((String) o));
-        } else if(s.equalsIgnoreCase("CREATETRANSFERENCE")){
+        }  else if(s.equalsIgnoreCase("GETUSERBYTOKEN")){
+            return new Gson().toJson(UserManager.getInstance().getUserByToken((String) o));
+        }else if(s.equalsIgnoreCase("CREATETRANSFERENCE")){
             TransferenceManager.addTransference(new Gson().fromJson((String) o, Transference.class));
         } else if(s.equalsIgnoreCase("GETRANSFERENCES")){
             List<Transference> transferenceList = TransferenceManager.getTransferences(new Gson().fromJson((String) o, User.class));
@@ -70,7 +66,15 @@ public class BancoDelegate implements IDelegate {
         } else if(s.equalsIgnoreCase("GETJUROS")){
             return MercadoManager.juros;
         } else if(s.equalsIgnoreCase("GETJUROSHISTORY")){
-            return new Gson().toJson(MercadoManager.jurosHistory);
+            return MercadoManager.jurosHistory;
+        } else if(s.equalsIgnoreCase("GETEMPRESTIMOS")){
+            List<Emprestimo> emprestimos = EmprestimoManager.getEmprestimos(new Gson().fromJson((String) o, User.class));
+            List<String> sc = new ArrayList<>();
+            emprestimos.forEach(t -> sc.add(new Gson().toJson(t)));
+            return sc;
+        } else if(s.equalsIgnoreCase("CREATEEMPRESTIMO")){
+            String[] cre = ((String) o).split(":");
+            return new Gson().toJson(EmprestimoManager.createEmprestimo(UserManager.getInstance().getUserByToken(cre[0]), Integer.parseInt(cre[1])));
         }
         return null;
     }

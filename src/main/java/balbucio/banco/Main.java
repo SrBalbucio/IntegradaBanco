@@ -2,15 +2,13 @@ package balbucio.banco;
 
 import balbucio.banco.frame.LoginFrame;
 import balbucio.banco.listener.TaskListener;
-import balbucio.banco.manager.CobrancaManager;
-import balbucio.banco.manager.MercadoManager;
-import balbucio.banco.manager.TransferenceManager;
-import balbucio.banco.manager.UserManager;
+import balbucio.banco.manager.*;
 import balbucio.banco.model.Acoes;
 import balbucio.banco.model.Cobranca;
 import balbucio.banco.model.Transference;
 import balbucio.banco.model.User;
 import balbucio.banco.server.BancoServer;
+import balbucio.banco.task.EmprestimoTask;
 import balbucio.banco.task.ImpostoTask;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.org.ejsl.frame.JLoadingFrame;
@@ -26,6 +24,7 @@ import co.gongzh.procbridge.IDelegate;
 import co.gongzh.procbridge.Server;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDeepOceanContrastIJTheme;
 import com.google.gson.Gson;
+import com.zaxxer.hikari.util.SuspendResumeLock;
 import de.milchreis.uibooster.UiBooster;
 import de.milchreis.uibooster.components.WaitingDialog;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +75,7 @@ public class Main {
         sqlite.createTable("users", "name VARCHAR(255), password VARCHAR(255), token VARCHAR(255), saldo BIGINT");
         sqlite.createTable("transferences", "pagante VARCHAR(255), recebedor VARCHAR(255), value BIGINT, time BIGINT");
         sqlite.createTable("acoes", "name VARCHAR(255), recebedor VARCHAR(255), token VARCHAR(255)");
+        sqlite.createTable("emprestimos", "devedor VARCHAR(255), value BIGINT, time BIGINT, token VARCHAR(255)");
         loadingFrame.setPosition(25);
         booster = new UiBooster();
         loadingFrame.setPosition(30);
@@ -87,7 +87,7 @@ public class Main {
                 public void run() {
                     try {
                         System.out.println("Reload do mercado");
-                        if (!Main.instance.connected) {
+                        if (!Main.connected()) {
                             MercadoManager.juros = NumberUtils.getRandomNumber(20, 90);
                             MercadoManager.jurosHistory.put(new Date().getTime(), MercadoManager.juros);
                             MercadoManager.valores.forEach((s, i) -> MercadoManager.valores.replace(s, NumberUtils.getRandomNumber(-300, 500)));
@@ -104,6 +104,7 @@ public class Main {
                 }
             }, 0, 10000);
             scheduler.repeatTask(new ImpostoTask(), 0, 20000);
+            scheduler.repeatTask(new EmprestimoTask(), 0, 1000);
         } catch(Exception e){
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "O agendador não conseguiu iniciar, o mercado de ações está parado!");
@@ -112,6 +113,7 @@ public class Main {
         new UserManager(sqlite);
         new TransferenceManager(sqlite);
         new MercadoManager(sqlite);
+        new EmprestimoManager();
         loadingFrame.setPosition(75);
         try {
             UIManager.setLookAndFeel(new FlatMaterialDeepOceanContrastIJTheme());
@@ -154,7 +156,12 @@ public class Main {
                         obj.keySet().forEach(e -> MercadoManager.valores.put(e, obj.getInt(e)));
                         MercadoManager.jurosHistory.clear();
                         JSONObject oobj = (JSONObject) request("GETJUROSHISTORY", "VALORES DOS JUROS");
-                        oobj.keySet().forEach(e -> MercadoManager.jurosHistory.put(Long.parseLong(e), obj.getLong(e)));
+                        System.out.println(oobj.toString());
+                        oobj.keySet().forEach(e -> {
+                            if(oobj.has(e)) {
+                                MercadoManager.jurosHistory.put(Long.parseLong(e), oobj.getLong(e));
+                            }
+                        });
                     } catch (Exception e){
                         e.printStackTrace();
                         setProblem(true);
@@ -177,6 +184,12 @@ public class Main {
     }
 
     public static Object request(String title, Object payload){
+        if(instance == null){
+            System.out.println("Ele é null wtf?????");
+        }
+        if(instance.client == null){
+            System.out.println("Cliente é null wtf?????");
+        }
         return instance.client.request(title, payload);
     }
 }

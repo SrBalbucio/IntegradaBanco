@@ -35,7 +35,45 @@ public class MercadoManager {
         valores.put("7AA2", 40);
         valores.put("LFA2", 40);
         valores.put("zzA2", 40);
-        valores.put("KLJHS", 40);
+        valores.put("KSAJ", 40);
+        valores.put("HJHJ", 40);
+        valores.put("S5DS", 40);
+        valores.put("SD", 40);
+        valores.put("YUOQ", 40);
+        valores.put("PPS", 40);
+        valores.put("123X", 40);
+        valores.put("AMZ2", 40);
+        valores.put("MRSC", 40);
+        valores.put("YUI", 40);
+        valores.put("PUTA", 40);
+        valores.put("XVI", 40);
+        valores.put("KSJDBU", 40);
+        valores.put("DUER", 40);
+        valores.put("PORNH", 40);
+        valores.put("BRAZINO", 40);
+        valores.put("iejkj", 40);
+        valores.put("ALEA", 40);
+        valores.put("ALL9", 40);
+        valores.put("POLA", 40);
+        valores.put("EROP", 40);
+        valores.put("GOVUS", 40);
+        valores.put("GOVBR", 40);
+        valores.put("GOCCN", 40);
+        valores.put("PADOCADOSEUZE", 40);
+        valores.put("ROLEZIN", 40);
+        valores.put("PAPAGAIODOPIX", 40);
+        valores.put("CASASFALIDAS", 40);
+        valores.put("AMERIBROXA", 40);
+        valores.put("123MILHAS", 40);
+        valores.put("123IMPORTADOS", 40);
+        valores.put("123B", 40);
+        valores.put("123C", 40);
+        valores.put("123D", 40);
+        valores.put("A900", 40);
+        valores.put("AVIOESABC", 40);
+        valores.put("JAO", 40);
+        valores.put("MARCINDAGROTAINC", 40);
+        valores.put("ikjj", 40);
 
         List<Object[]> u = sqlite.getAllValuesFromColumns("acoes", "name", "recebedor", "token");
         for(Object[] t : u){
@@ -55,7 +93,7 @@ public class MercadoManager {
 
     public static Long getJuros(){
         if(Main.connected()){
-            return (long) Main.request("GETJUROS", "");
+            return Long.parseLong(String.valueOf((int) Main.request("GETJUROS", "")));
         }
         return juros;
     }

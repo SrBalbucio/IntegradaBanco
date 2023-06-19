@@ -68,6 +68,12 @@ public class UserManager {
         }
         return users.stream().filter(u -> u.getName().equalsIgnoreCase(userName)).findFirst().orElse(null);
     }
+    public User getUserByToken(String token){
+        if(Main.connected()){
+            return new Gson().fromJson((String) Main.request("GETUSERBYTOKEN", token), User.class);
+        }
+        return users.stream().filter(u -> u.getToken().equalsIgnoreCase(token)).findFirst().orElse(null);
+    }
 
     public static List<User> getUsers() {
         return users;
