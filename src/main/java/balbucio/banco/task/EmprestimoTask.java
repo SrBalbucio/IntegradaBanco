@@ -22,7 +22,7 @@ public class EmprestimoTask extends RSTask {
                     Date empTime = new Date(e.getMaxTime());
                     if (today.after(empTime)) {
                         long finalValue = e.getValor() * MercadoManager.getJuros();
-                        TransferenceManager.removeTransference(UserManager.getInstance().getUserByToken(e.getToken()), "Banco (Emprestimo)", finalValue);
+                        TransferenceManager.removeTransference(UserManager.getInstance().getUserByToken(e.getDevedor()), "Banco (Emprestimo)", finalValue);
                     }
                 });
             }

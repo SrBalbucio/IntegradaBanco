@@ -72,6 +72,7 @@ public class UserManager {
         if(Main.connected()){
             return new Gson().fromJson((String) Main.request("GETUSERBYTOKEN", token), User.class);
         }
+        System.out.println(token);
         return users.stream().filter(u -> u.getToken().equalsIgnoreCase(token)).findFirst().orElse(null);
     }
 

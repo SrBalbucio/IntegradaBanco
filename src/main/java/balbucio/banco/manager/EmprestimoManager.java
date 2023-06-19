@@ -19,8 +19,8 @@ public class EmprestimoManager {
 
     public EmprestimoManager(){
         List<Object[]> u = Main.getSqlite().getAllValuesFromColumns("emprestimos", "devedor", "value", "time", "token");
-        System.out.println(u.size());
         for(Object[] t : u){
+            System.out.println(t[0]);
             emprestimos.add(new Emprestimo((String) t[3], (String) t[0], (int) t[1], (long) t[2]));
         }
     }

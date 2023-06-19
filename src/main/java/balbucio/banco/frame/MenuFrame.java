@@ -3,6 +3,7 @@ package balbucio.banco.frame;
 import balbucio.banco.Main;
 import balbucio.banco.manager.*;
 import balbucio.banco.model.*;
+import balbucio.banco.task.RandomEventTask;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.org.ejsl.component.EJSLButton;
 import balbucio.org.ejsl.component.JImage;
@@ -206,6 +207,7 @@ public class MenuFrame extends JFrame {
                 }
             }
         }, 1000, 30000);
+        Main.getScheduler().repeatTask(new RandomEventTask(user), 1000, 1000*60*5);
         this.setVisible(true);
         dialog.close();
     }
