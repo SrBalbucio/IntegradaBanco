@@ -532,63 +532,64 @@ public class MenuFrame extends JFrame {
                         JOptionPane.showMessageDialog(null, "Você perdeu, era " + n + "!");
                     }
                 } else if (selection.contains("2")) {
-                    int x = NumberUtils.getRandomNumber(1, 5);
+                    AtomicInteger x = new AtomicInteger(NumberUtils.getRandomNumber(1, 5));
                     Main.getBooster().showList(
-                            "Escolha a peça que deseja apostar, se a peça que você escolher for a mesma do sistema, você ganha se não você perde.\nA aposta é feita diretamente no saldo da sua conta, tome cuidado!",
+                            "Escolha a peça que deseja apostar, se a peça que você escolher for a mesma do sistema, você ganha se não você perde.\n\nA aposta é feita diretamente com saldo da sua conta, tome cuidado!",
                             "Selecione uma peça",
                             element -> {
                                 switch (element.getTitle()) {
                                     case "1X":
-                                        if (x == 1) {
+                                        if (x.get() == 1) {
                                             TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 10))));
                                             JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
                                         } else {
-                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 5))));
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % 5));
                                             JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
                                         }
                                         break;
                                     case "2X":
-                                        if (x == 2) {
+                                        if (x.get() == 2) {
                                             TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 30))));
                                             JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
                                         } else {
-                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 20))));
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % 20));
                                             JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
                                         }
                                         break;
                                     case "3X":
-                                        if (x == 3) {
+                                        if (x.get() == 3) {
                                             TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 60))));
                                             JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
                                         } else {
-                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 40))));
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % 40));
                                             JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
                                         }
                                         break;
                                     case "4X":
-                                        if (x == 4) {
+                                        if (x.get() == 4) {
                                             TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 70))));
                                             JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
                                         } else {
-                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 60))));
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % 60));
                                             JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
                                         }
                                         break;
                                     case "5X":
-                                        if (x == 5) {
+                                        if (x.get() == 5) {
                                             TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() * 2));
                                             JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
                                         } else {
-                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 200))));
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() * 2));
                                             JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
                                         }
                                         break;
                                 }
+                                x.set(NumberUtils.getRandomNumber(1, 5));
                             },
-                            new ListElement("1X", "- Ganhe até 10% do seu saldo ou perca até 5% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/01.png"))),
-                            new ListElement("2X", "- Ganhe até 30% do seu saldo ou perca até 20% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/02.png"))),
-                            new ListElement("3X", "- Ganhe até 60% do seu saldo ou perca até 40% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/03.png"))),
-                            new ListElement("4X", "- Ganhe até 70% do seu saldo ou perca até 60% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/04.png"))),
+                            new ListElement("1X", "- Ganhe até 10% do seu saldo ou perca 5% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/01.png"))),
+                            new ListElement("2X", "- Ganhe até 30% do seu saldo ou perca 20% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/02.png"))),
+                            new ListElement("3X", "- Ganhe até 60% do seu saldo ou perca 40% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/03.png"))),
+                            new ListElement("4X", "- Ganhe até 70% do seu saldo ou perca 60% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/04.png"))),
                             new ListElement("5X", "- Tudo ou nada\n- Ganhe 2X do seu saldo ou perca até 200% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/05.png")))
                     );
                 }
