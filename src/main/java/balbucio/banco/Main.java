@@ -76,6 +76,7 @@ public class Main {
         sqlite.createTable("transferences", "pagante VARCHAR(255), recebedor VARCHAR(255), value BIGINT, time BIGINT");
         sqlite.createTable("acoes", "name VARCHAR(255), recebedor VARCHAR(255), token VARCHAR(255)");
         sqlite.createTable("emprestimos", "devedor VARCHAR(255), value BIGINT, time BIGINT, token VARCHAR(255)");
+        sqlite.createTable("cofre", "owner VARCHAR(255), value BIGINT, token VARCHAR(255)");
         loadingFrame.setPosition(25);
         booster = new UiBooster();
         loadingFrame.setPosition(30);
@@ -114,6 +115,7 @@ public class Main {
         new TransferenceManager(sqlite);
         new MercadoManager(sqlite);
         new EmprestimoManager();
+        new CofreManager();
         loadingFrame.setPosition(75);
         try {
             UIManager.setLookAndFeel(new FlatMaterialDeepOceanContrastIJTheme());

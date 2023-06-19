@@ -75,6 +75,14 @@ public class BancoDelegate implements IDelegate {
         } else if(s.equalsIgnoreCase("CREATEEMPRESTIMO")){
             String[] cre = ((String) o).split(":");
             return new Gson().toJson(EmprestimoManager.createEmprestimo(UserManager.getInstance().getUserByToken(cre[0]), Integer.parseInt(cre[1])));
+        } else if(s.equalsIgnoreCase("CREATECOFRE")){
+            String[] cre = ((String) o).split(":");
+            CofreManager.createTransference(UserManager.getInstance().getUserByToken(cre[0]), Integer.parseInt(cre[1]));
+        } else if(s.equalsIgnoreCase("GETCOFRE")){
+            List<CofreTransference> co = CofreManager.getTransferences(new Gson().fromJson((String) o, User.class));
+            List<String> sc = new ArrayList<>();
+            co.forEach(t -> sc.add(new Gson().toJson(t)));
+            return sc;
         }
         return null;
     }

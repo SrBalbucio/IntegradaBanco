@@ -6,17 +6,14 @@ import balbucio.banco.model.*;
 import balbucio.banco.utils.NumberUtils;
 import balbucio.org.ejsl.component.EJSLButton;
 import balbucio.org.ejsl.component.JImage;
-import balbucio.org.ejsl.event.ClickListener;
 import balbucio.org.ejsl.utils.ColorUtils;
 import balbucio.org.ejsl.utils.ImageUtils;
 import balbucio.responsivescheduler.RSTask;
 import com.google.gson.Gson;
-import de.milchreis.uibooster.UiBooster;
 import de.milchreis.uibooster.components.WaitingDialog;
-import javafx.scene.chart.ScatterChart;
+import de.milchreis.uibooster.model.ListElement;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
-import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
@@ -36,6 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MenuFrame extends JFrame {
 
     private User user;
+    private long cofreValue;
+    private long cofreJuros;
     private List<Transference> transferences = new ArrayList<>();
     private Map<Long, Long> saldo = new HashMap<>();
     private List<Acoes> acoesUser = new ArrayList<>();
@@ -45,6 +44,7 @@ public class MenuFrame extends JFrame {
     private JLabel jurosLabel;
     private JLabel cofreLabel;
     private JLabel cofreJurosLabel;
+    private JLabel cofreSaldoLabel;
     private JTable table;
     private JTable transferenciasTable;
     private JTable emprestimosTable;
@@ -79,7 +79,7 @@ public class MenuFrame extends JFrame {
 
                     if (!Main.connected()) {
                         CobrancaManager.getCobrancas().getOrDefault(user.getToken(), new ArrayList<>()).forEach(c -> {
-                            Main.getBooster().createNotification("O usuário "+UserManager.getInstance().getUserName(c.getPedinteToken())+" está te cobrando!", "Nova Cobrança!");
+                            Main.getBooster().createNotification("O usuário " + UserManager.getInstance().getUserName(c.getPedinteToken()) + " está te cobrando!", "Nova Cobrança!");
                             Main.getBooster().showConfirmDialog("O usuário " + UserManager.getInstance().getUserName(c.getPedinteToken()) + " quer que você pague $" + c.getValor() + " para ele, você deseja efetuar a transferência?", "Pagamento requisitado", () -> {
                                 if (user.getSaldo() >= c.getValor()) {
                                     TransferenceManager.removeTransference(user, c.getDevedorToken(), c.getValor());
@@ -169,10 +169,18 @@ public class MenuFrame extends JFrame {
                     DefaultTableModel emmodel = new DefaultTableModel();
                     emmodel.addColumn("Valor");
                     emmodel.addColumn("Vencimento");
-                    for(Emprestimo e : EmprestimoManager.getEmprestimos(user)){
+                    for (Emprestimo e : EmprestimoManager.getEmprestimos(user)) {
                         emmodel.addRow(new Object[]{e.getValor(), formate.format(new Date(e.getMaxTime()))});
                     }
                     emprestimosTable.setModel(emmodel);
+                    AtomicInteger cv = new AtomicInteger();
+                    CofreManager.getTransferences(user).forEach(t -> {
+                        cv.addAndGet(t.getValor());
+                    });
+                    cofreJuros = MercadoManager.getJuros() * 2;
+                    cofreLabel.setText("O saldo do seu cofrinho é $" + cv);
+                    cofreJurosLabel.setText("O cofre está redendendo %" + cofreJuros);
+                    cofreSaldoLabel.setText("Você tem ao total (cofre + saldo) $" + (cv.get() + user.getSaldo()));
                 } catch (Exception e) {
                     e.printStackTrace();
                     setProblem(true);
@@ -180,6 +188,24 @@ public class MenuFrame extends JFrame {
                 }
             }
         }, 1000, 5000);
+        Main.getScheduler().repeatTask(new RSTask() {
+            @Override
+            public void run() {
+                try {
+                    cofreValue = 0;
+                    cofreJuros = MercadoManager.getJuros() * 2;
+                    CofreManager.getTransferences(user).forEach(t -> {
+                        cofreValue += t.getValor();
+                    });
+                    CofreManager.createTransference(user, Math.toIntExact(cofreValue % cofreJuros));
+                    System.out.println("O user " + user.getToken() + " vai receber " + Math.toIntExact(cofreValue % cofreJuros) + " por causa do cofre!");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    setProblem(true);
+                    setProblemID(8);
+                }
+            }
+        }, 1000, 30000);
         this.setVisible(true);
         dialog.close();
     }
@@ -222,6 +248,7 @@ public class MenuFrame extends JFrame {
         center.add(sobrePanel(), "SOBRE");
         center.add(new CardFrame(user), "CARD");
         center.add(emprestimosPanel(), "EMP");
+        center.add(cofrePanel(), "COFRE");
         menu.show(center, "HOME");
         return center;
     }
@@ -285,17 +312,17 @@ public class MenuFrame extends JFrame {
                 String[] ab = new String[em.size()];
 
                 for (int i = 0; i < em.size(); i++) {
-                    ab[i] = "$"+em.get(i).getValor()+" / "+em.get(i).getToken();
+                    ab[i] = "$" + em.get(i).getValor() + " / " + em.get(i).getToken();
                 }
 
-                List<String> list = Main.getBooster().showMultipleSelection("Quais emprestimos você deseja pagar agora?", "Emprestimos a pagar",true, ab);
+                List<String> list = Main.getBooster().showMultipleSelection("Quais emprestimos você deseja pagar agora?", "Emprestimos a pagar", true, ab);
 
-                for(String emp : list){
+                for (String emp : list) {
                     String[] cre = emp.split(" / ");
                     em.stream().filter(emc -> emc.getToken().equalsIgnoreCase(cre[1])).findFirst().ifPresent(emc -> {
-                        if(user.getSaldo() >= emc.getValor()) {
+                        if (user.getSaldo() >= emc.getValor()) {
                             TransferenceManager.removeTransference(user, "Banco (Emprestimo)", emc.getValor());
-                        } else{
+                        } else {
                             JOptionPane.showMessageDialog(null, "Você não tem dinheiro suficiente para pagar este empréstimo.");
                         }
 
@@ -317,15 +344,53 @@ public class MenuFrame extends JFrame {
         return p;
     }
 
-    public JPanel cofrePanel(){
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+    public JPanel cofrePanel() {
+        JPanel p = new JPanel(new BorderLayout());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton add = new JButton("Adicionar dinheiro");
+        add.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto você deseja por no cofre?\nAo colocar o seu dinheiro no cofre ele passa a render quando você está ativo."));
+                if (user.getSaldo() >= valor) {
+                    TransferenceManager.removeTransference(user, "Cofre", valor);
+                    CofreManager.createTransference(user, valor);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Você não tem esse dinheiro para por no cofre!");
+                }
+            }
+        });
+
         JButton pegar = new JButton("Pegar dinheiro");
+        pegar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto você deseja pegar do cofre?\nÉ importante alertar que ao tirar o seu dinheiro do cofre ele para de render."));
+                if (cofreValue >= valor) {
+                    CofreManager.pegaDinheiro(user, valor);
+                    TransferenceManager.createTransference(user, "Cofre", valor);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Você não tem esse dinheiro no cofre!");
+                }
+            }
+        });
+        buttons.add(add);
+        buttons.add(pegar);
         cofreLabel = new JLabel("O saldo do seu cofrinho é $");
+        cofreLabel.setFont(cofreLabel.getFont().deriveFont(18l));
+        cofreSaldoLabel = new JLabel("Você tem ao total (cofre + saldo) $");
+        cofreSaldoLabel.setFont(cofreLabel.getFont().deriveFont(18l));
         cofreJurosLabel = new JLabel("O cofre está redendendo %");
-        p.add(buttons);
+        cofreJurosLabel.setFont(cofreLabel.getFont().deriveFont(16l));
+        JLabel info = new JLabel("Importante: O Cofre é separado dos outros sistemas, você precisa estar online para que seu cofre renda.");
+        p.add(buttons, BorderLayout.NORTH);
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(cofreLabel);
+        panel.add(cofreSaldoLabel);
+        panel.add(cofreJurosLabel);
+        panel.add(info);
+        p.add(panel, BorderLayout.CENTER);
         return p;
     }
 
@@ -378,9 +443,9 @@ public class MenuFrame extends JFrame {
 
                 AtomicInteger i = new AtomicInteger();
                 MercadoManager.valores.forEach((a, v) -> {
-                    if(v > 0){
+                    if (v > 0) {
                         acoes[i.getAndIncrement()] = a + "($" + v + ")";
-                    } else{
+                    } else {
                         acoes[i.getAndIncrement()] = a + "($" + 0 + ")";
                     }
                 });
@@ -393,7 +458,7 @@ public class MenuFrame extends JFrame {
                 for (String a : selected) {
                     MercadoManager.valores.keySet().stream().filter(a::contains).findFirst().ifPresent(name -> {
                         int valor = MercadoManager.valores.get(name);
-                        if(valor > 0) {
+                        if (valor > 0) {
                             long valorFinal = valor + (valor % MercadoManager.getJuros());
                             if (user.getSaldo() >= valorFinal) {
                                 new Acoes(name, user.getToken());
@@ -402,8 +467,8 @@ public class MenuFrame extends JFrame {
                             } else {
                                 JOptionPane.showMessageDialog(null, "Você não tem dinheiro para comprar a ação " + name + "!\nValor: " + valorFinal);
                             }
-                        } else{
-                            JOptionPane.showMessageDialog(null, "Tivemos que cancelar sua compra, pois a ação "+name+" não está valendo nada e acabou quebrando!");
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Tivemos que cancelar sua compra, pois a ação " + name + " não está valendo nada e acabou quebrando!");
                         }
                     });
                 }
@@ -429,11 +494,11 @@ public class MenuFrame extends JFrame {
                     acoesUser.stream().filter(ac -> a.contains(ac.getActionName())).findFirst().ifPresent(ac -> {
                         ac.delete();
                         int valor = MercadoManager.valores.get(ac.getActionName());
-                        if(valor > 0) {
+                        if (valor > 0) {
                             long valorFinal = valor + (valor % MercadoManager.getJuros());
                             TransferenceManager.createTransference(user, "Mercado de Ações", valorFinal);
                             JOptionPane.showMessageDialog(null, "Você vendeu a ação " + ac.getActionName() + " por $" + valorFinal + "!");
-                        } else{
+                        } else {
                             JOptionPane.showMessageDialog(null, "Você vendeu a ação " + ac.getActionName() + " por $" + 0 + "!");
                         }
                     });
@@ -453,19 +518,79 @@ public class MenuFrame extends JFrame {
                 String selection = Main.getBooster().showSelectionDialog(
                         "Qual tipo de aposta você deseja fazer?",
                         "Escolha o tipo de aposta",
-                        Arrays.asList("Chutar Número (1)"));
-                int x = NumberUtils.getRandomNumber(2, 10);
-                int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto deseja apostar nessa?\n\nSe você acertar irá ganhar "+x+"X em cima do valor apostado."));
-                if(selection.contains("1")){
-                    int value =Main.getBooster().showSlider("Selecione o número que deseja chutar!", "Chute um número (Aposta)", 0, 10, 5);
+                        Arrays.asList("Chutar Número (1)", "Dominó sortido (2)"));
+                if (selection.contains("1")) {
+                    int x = NumberUtils.getRandomNumber(2, 10);
+                    int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto deseja apostar nessa?\n\nSe você acertar irá ganhar " + x + "X em cima do valor apostado."));
+                    int value = Main.getBooster().showSlider("Selecione o número que deseja chutar!", "Chute um número (Aposta)", 0, 10, 5);
                     int n = r.nextInt(10);
-                    if(n == value){
+                    if (n == value) {
                         TransferenceManager.createTransference(user, "Cassino", valor * x);
-                        JOptionPane.showMessageDialog(null, "Você acertou e recebeu "+valor*x+"!");
-                    } else{
+                        JOptionPane.showMessageDialog(null, "Você acertou e recebeu " + valor * x + "!");
+                    } else {
                         TransferenceManager.removeTransference(user, "Cassino", valor);
-                        JOptionPane.showMessageDialog(null, "Você perdeu, era "+n+"!");
+                        JOptionPane.showMessageDialog(null, "Você perdeu, era " + n + "!");
                     }
+                } else if (selection.contains("2")) {
+                    int x = NumberUtils.getRandomNumber(1, 5);
+                    Main.getBooster().showList(
+                            "Escolha a peça que deseja apostar, se a peça que você escolher for a mesma do sistema, você ganha se não você perde.\nA aposta é feita diretamente no saldo da sua conta, tome cuidado!",
+                            "Selecione uma peça",
+                            element -> {
+                                switch (element.getTitle()) {
+                                    case "1X":
+                                        if (x == 1) {
+                                            TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 10))));
+                                            JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
+                                        } else {
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 5))));
+                                            JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
+                                        }
+                                        break;
+                                    case "2X":
+                                        if (x == 2) {
+                                            TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 30))));
+                                            JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
+                                        } else {
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 20))));
+                                            JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
+                                        }
+                                        break;
+                                    case "3X":
+                                        if (x == 3) {
+                                            TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 60))));
+                                            JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
+                                        } else {
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 40))));
+                                            JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
+                                        }
+                                        break;
+                                    case "4X":
+                                        if (x == 4) {
+                                            TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 70))));
+                                            JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
+                                        } else {
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 60))));
+                                            JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
+                                        }
+                                        break;
+                                    case "5X":
+                                        if (x == 5) {
+                                            TransferenceManager.createTransference(user, "Cassino (Domino)", (user.getSaldo() * 2));
+                                            JOptionPane.showMessageDialog(null, "Parabéns, você acertou a mesma peça do sistema.\nSeu dinheiro já está na conta!");
+                                        } else {
+                                            TransferenceManager.removeTransference(user, "Cassino (Domino)", (user.getSaldo() % (NumberUtils.getRandomNumber(1, 200))));
+                                            JOptionPane.showMessageDialog(null, "Você perdeu e por isso removemos o valor estipulado da sua conta!");
+                                        }
+                                        break;
+                                }
+                            },
+                            new ListElement("1X", "- Ganhe até 10% do seu saldo ou perca até 5% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/01.png"))),
+                            new ListElement("2X", "- Ganhe até 30% do seu saldo ou perca até 20% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/02.png"))),
+                            new ListElement("3X", "- Ganhe até 60% do seu saldo ou perca até 40% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/03.png"))),
+                            new ListElement("4X", "- Ganhe até 70% do seu saldo ou perca até 60% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/04.png"))),
+                            new ListElement("5X", "- Tudo ou nada\n- Ganhe 2X do seu saldo ou perca até 200% do seu saldo", ImageUtils.getImage(this.getClass().getResourceAsStream("/images/domino/05.png")))
+                    );
                 }
             }
         });
@@ -476,9 +601,9 @@ public class MenuFrame extends JFrame {
                 List<String> instituicoes = Main.getBooster().showMultipleSelection("Você é uma pessoa bondosa?\nDoe parte do seu dinheiro para instituições!",
                         "Doar",
                         "DoBem", "Instituto do Cancer", "MTE", "Moradores de Rua");
-                for(String i : instituicoes){
-                    int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto deseja doar para "+i+"?"));
-                    TransferenceManager.removeTransference(user, "Doação ("+i+")", valor);
+                for (String i : instituicoes) {
+                    int valor = Integer.parseInt(Main.getBooster().showTextInputDialog("Quanto deseja doar para " + i + "?"));
+                    TransferenceManager.removeTransference(user, "Doação (" + i + ")", valor);
                 }
             }
         });
@@ -550,6 +675,10 @@ public class MenuFrame extends JFrame {
         emprestimo.setPrimaryColor(color);
         emprestimo.setAnimation(true);
         menu.add(emprestimo);
+        EJSLButton cofre = new EJSLButton("Cofre");
+        cofre.setPrimaryColor(color);
+        cofre.setAnimation(true);
+        menu.add(cofre);
         EJSLButton card = new EJSLButton("Cartão");
         card.setPrimaryColor(color);
         menu.add(card);
@@ -567,6 +696,7 @@ public class MenuFrame extends JFrame {
             mercado.setSelected(false);
             transferencias.setSelected(false);
             emprestimo.setSelected(false);
+            cofre.setSelected(false);
             card.setSelected(false);
             sobre.setSelected(false);
             revalidateAll();
@@ -586,6 +716,19 @@ public class MenuFrame extends JFrame {
             mercado.setSelected(false);
             transferencias.setSelected(false);
             emprestimo.setSelected(true);
+            cofre.setSelected(false);
+            card.setSelected(false);
+            sobre.setSelected(false);
+            revalidateAll();
+        });
+
+        cofre.addClickListener(e -> {
+            this.menu.show(center, "COFRE");
+            home.setSelected(false);
+            mercado.setSelected(false);
+            transferencias.setSelected(false);
+            cofre.setSelected(true);
+            emprestimo.setSelected(false);
             card.setSelected(false);
             sobre.setSelected(false);
             revalidateAll();
@@ -597,6 +740,7 @@ public class MenuFrame extends JFrame {
             mercado.setSelected(false);
             transferencias.setSelected(true);
             emprestimo.setSelected(false);
+            cofre.setSelected(false);
             card.setSelected(false);
             sobre.setSelected(false);
             revalidateAll();
@@ -610,6 +754,7 @@ public class MenuFrame extends JFrame {
                 transferencias.setSelected(false);
                 emprestimo.setSelected(false);
                 card.setSelected(true);
+                cofre.setSelected(false);
                 sobre.setSelected(false);
                 revalidateAll();
             } else {
@@ -624,6 +769,7 @@ public class MenuFrame extends JFrame {
             transferencias.setSelected(false);
             emprestimo.setSelected(false);
             card.setSelected(false);
+            cofre.setSelected(false);
             sobre.setSelected(true);
             revalidateAll();
         });

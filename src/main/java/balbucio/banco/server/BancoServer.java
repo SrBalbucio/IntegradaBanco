@@ -66,6 +66,7 @@ public class BancoServer {
         new TransferenceManager(sqlite);
         new MercadoManager(sqlite);
         new EmprestimoManager();
+        new CofreManager();
         server = new Server(25565, new BancoDelegate());
         server.start();
         CommandManager manager = new CommandManager();
