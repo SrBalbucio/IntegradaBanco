@@ -21,7 +21,7 @@ public class TransferenceManager {
         List<Object[]> u = sqlite.getAllValuesFromColumns("transferences", "pagante", "recebedor", "value", "time");
         System.out.println(u.size());
         for(Object[] t : u){
-            transferences.add(new Transference((String) t[0], (String) t[1], (int) t[2], (long) t[3]));
+            transferences.add(new Transference((String) t[0], (String) t[1], Long.parseLong(String.valueOf(t[2])), (long) t[3]));
         }
         System.out.println(transferences.size());
     }
